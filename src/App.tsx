@@ -8,6 +8,7 @@ import CallbackPage from './pages/auth/CallbackPage';
 import DashboardPage from './pages/jobs/DashboardPage';
 import JobDetailPage from './pages/jobs/JobDetailPage';
 import CreateJobPage from './pages/jobs/CreateJobPage';
+import EditJobPage from './pages/jobs/EditJobPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -60,6 +61,11 @@ const AppRoutes = () => {
       <Route path="/jobs/new" element={
         <ProtectedRoute>
           <CreateJobPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/jobs/:id/edit" element={
+        <ProtectedRoute>
+          <EditJobPage />
         </ProtectedRoute>
       } />
       <Route path="/jobs/:id" element={
