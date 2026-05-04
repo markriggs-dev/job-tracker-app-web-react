@@ -55,3 +55,63 @@ export interface UpdateJobRequisitionRequest extends CreateJobRequisitionRequest
 export interface UpdateJobStatusRequest {
   status: JobStatus;
 }
+
+export const ContactRoleType = {
+  AgencyRecruiter: 'AgencyRecruiter',
+  AgencyAccountManager: 'AgencyAccountManager',
+  CompanyRecruiter: 'CompanyRecruiter',
+  HiringManager: 'HiringManager',
+  NetworkContact: 'NetworkContact'
+} as const;
+
+export type ContactRoleType = typeof ContactRoleType[keyof typeof ContactRoleType];
+
+export interface ContactResponse {
+  id: string;
+  name: string;
+  email?: string;
+  linkedInUrl?: string;
+  agencyName?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobRequisitionContactResponse {
+  id: string;
+  jobRequisitionId: string;
+  contactId: string;
+  contactName: string;
+  email?: string;
+  linkedInUrl?: string;
+  agencyName?: string;
+  roleType: ContactRoleType;
+  roleTypeDisplay: string;
+  createdAt: string;
+}
+
+export interface CreateContactRequest {
+  name: string;
+  email?: string;
+  linkedInUrl?: string;
+  agencyName?: string;
+}
+
+export interface UpdateContactRequest {
+  name: string;
+  email?: string;
+  linkedInUrl?: string;
+  agencyName?: string;
+}
+
+export interface AddContactToJobRequest {
+  contactId: string;
+  roleType: ContactRoleType;
+}
+
+export interface CreateAndAddContactRequest {
+  name: string;
+  email?: string;
+  linkedInUrl?: string;
+  agencyName?: string;
+  roleType: ContactRoleType;
+}

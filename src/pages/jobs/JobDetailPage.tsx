@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobService } from "../../services/jobService";
-import { JobStatus } from "../../types";
+import { contactService } from "../../services/contactService";
+import { JobStatus, ContactRoleType } from "../../types";
+import type { CreateAndAddContactRequest } from "../../types";
 
 const statusColors: Record<string, string> = {
   Discovered: "#6c757d",
@@ -14,10 +17,20 @@ const statusColors: Record<string, string> = {
   Withdrawn: "#999",
 };
 
+const emptyContactForm: CreateAndAddContactRequest = {
+  name: "",
+  email: "",
+  linkedInUrl: "",
+  agencyName: "",
+  roleType: ContactRoleType.CompanyRecruiter,
+};
+
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [contactForm, setContactForm] = useState<CreateAndAddContactRequest>(emptyContactForm);
 
   const {
     data: job,
@@ -41,6 +54,30 @@ const JobDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       navigate("/");
+    },
+  });
+
+  const { data: jobContacts = [] } = useQuery({
+    queryKey: ["jobContacts", id],
+    queryFn: () => contactService.getContactsForJob(id!),
+    enabled: !!id,
+  });
+
+  const addContactMutation = useMutation({
+    mutationFn: (data: CreateAndAddContactRequest) =>
+      contactService.createAndAddContactToJob(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
+      setShowAddContact(false);
+      setContactForm(emptyContactForm);
+    },
+  });
+
+  const removeContactMutation = useMutation({
+    mutationFn: (linkId: string) =>
+      contactService.removeContactFromJob(id!, linkId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
     },
   });
 
@@ -143,6 +180,97 @@ const JobDetailPage = () => {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Contacts */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.sectionTitle}>Contacts</h2>
+            <button style={styles.addButton} onClick={() => setShowAddContact(v => !v)}>
+              {showAddContact ? "Cancel" : "+ Add Contact"}
+            </button>
+          </div>
+
+          {showAddContact && (
+            <div style={styles.addForm}>
+              <div style={styles.formRow}>
+                <input
+                  style={styles.input}
+                  placeholder="Name *"
+                  value={contactForm.name}
+                  onChange={e => setContactForm(f => ({ ...f, name: e.target.value }))}
+                />
+                <select
+                  style={styles.input}
+                  value={contactForm.roleType}
+                  onChange={e => setContactForm(f => ({ ...f, roleType: e.target.value as CreateAndAddContactRequest["roleType"] }))}
+                >
+                  {Object.values(ContactRoleType).map(r => (
+                    <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={styles.formRow}>
+                <input
+                  style={styles.input}
+                  placeholder="Email"
+                  value={contactForm.email ?? ""}
+                  onChange={e => setContactForm(f => ({ ...f, email: e.target.value }))}
+                />
+                <input
+                  style={styles.input}
+                  placeholder="LinkedIn URL"
+                  value={contactForm.linkedInUrl ?? ""}
+                  onChange={e => setContactForm(f => ({ ...f, linkedInUrl: e.target.value }))}
+                />
+              </div>
+              <div style={styles.formRow}>
+                <input
+                  style={styles.input}
+                  placeholder="Agency Name"
+                  value={contactForm.agencyName ?? ""}
+                  onChange={e => setContactForm(f => ({ ...f, agencyName: e.target.value }))}
+                />
+                <button
+                  style={styles.saveButton}
+                  disabled={!contactForm.name.trim() || addContactMutation.isPending}
+                  onClick={() => addContactMutation.mutate(contactForm)}
+                >
+                  {addContactMutation.isPending ? "Saving..." : "Save Contact"}
+                </button>
+              </div>
+              {addContactMutation.isError && (
+                <p style={{ color: "#c00", fontSize: "13px", margin: "4px 0 0" }}>Failed to add contact.</p>
+              )}
+            </div>
+          )}
+
+          {jobContacts.length === 0 && !showAddContact ? (
+            <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No contacts added yet.</p>
+          ) : (
+            <div style={styles.contactList}>
+              {jobContacts.map(c => (
+                <div key={c.id} style={styles.contactRow}>
+                  <div style={styles.contactInfo}>
+                    <span style={styles.contactName}>{c.contactName}</span>
+                    <span style={{ ...styles.roleBadge, backgroundColor: "#e8f0fb", color: "#1F3864" }}>
+                      {c.roleTypeDisplay}
+                    </span>
+                    {c.email && <a href={`mailto:${c.email}`} style={styles.contactLink}>{c.email}</a>}
+                    {c.linkedInUrl && <a href={c.linkedInUrl} target="_blank" rel="noreferrer" style={styles.contactLink}>LinkedIn</a>}
+                    {c.agencyName && <span style={styles.contactMeta}>{c.agencyName}</span>}
+                  </div>
+                  <button
+                    style={styles.removeButton}
+                    onClick={() => removeContactMutation.mutate(c.id)}
+                    disabled={removeContactMutation.isPending}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Job Description */}
@@ -285,6 +413,41 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "16px",
     borderRadius: "4px",
     margin: 0,
+  },
+  cardHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" },
+  addButton: {
+    backgroundColor: "#2E75B6", color: "#fff", border: "none",
+    padding: "6px 14px", borderRadius: "4px", cursor: "pointer", fontSize: "13px",
+  },
+  addForm: { marginBottom: "16px", display: "flex", flexDirection: "column", gap: "8px" },
+  formRow: { display: "flex", gap: "8px" },
+  input: {
+    flex: 1, padding: "7px 10px", border: "1px solid #ddd",
+    borderRadius: "4px", fontSize: "13px",
+  },
+  saveButton: {
+    backgroundColor: "#375623", color: "#fff", border: "none",
+    padding: "7px 16px", borderRadius: "4px", cursor: "pointer", fontSize: "13px",
+    whiteSpace: "nowrap" as const,
+  },
+  contactList: { display: "flex", flexDirection: "column", gap: "8px" },
+  contactRow: {
+    display: "flex", justifyContent: "space-between", alignItems: "center",
+    padding: "10px 12px", backgroundColor: "#f9f9f9",
+    borderRadius: "4px", border: "1px solid #eee",
+  },
+  contactInfo: { display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" as const },
+  contactName: { fontWeight: "bold", fontSize: "14px", color: "#222" },
+  roleBadge: {
+    fontSize: "11px", fontWeight: "bold", padding: "2px 8px",
+    borderRadius: "10px", letterSpacing: "0.3px",
+  },
+  contactLink: { fontSize: "13px", color: "#2E75B6" },
+  contactMeta: { fontSize: "12px", color: "#888" },
+  removeButton: {
+    backgroundColor: "transparent", color: "#c00", border: "1px solid #c00",
+    padding: "4px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px",
+    whiteSpace: "nowrap" as const,
   },
   deleteWarning: { fontSize: "13px", color: "#666", marginBottom: "16px" },
   deleteButton: {
