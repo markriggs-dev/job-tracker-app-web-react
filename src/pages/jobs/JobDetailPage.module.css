@@ -1,0 +1,488 @@
+.container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+/* ── Header ── */
+.header {
+  background-color: #1F3864;
+  color: #fff;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.backButton {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.editButton {
+  background-color: #2E75B6;
+  border: none;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.company {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+/* ── Page content ── */
+.content {
+  max-width: 900px;
+  margin: 32px auto;
+  padding: 0 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.message {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+}
+
+/* ── Cards ── */
+.card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border: 1px solid #eee;
+}
+
+.dangerCard {
+  composes: card;
+  border-color: #ffcccc;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1F3864;
+  margin: 0;
+}
+
+.dangerTitle {
+  composes: sectionTitle;
+  color: #c00;
+}
+
+/* ── Status buttons ── */
+.statusButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statusButton {
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* ── Details grid ── */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailLabel {
+  font-size: 12px;
+  font-weight: bold;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailValue {
+  font-size: 14px;
+  color: #333;
+}
+
+.detailValue a {
+  color: #2E75B6;
+  word-break: break-all;
+}
+
+/* ── Shared form elements ── */
+.addButton {
+  background-color: #2E75B6;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.addForm {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formRow {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.saveButton {
+  background-color: #375623;
+  color: #fff;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.cancelEditButton {
+  background-color: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  resize: vertical;
+  font-family: Arial, sans-serif;
+}
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.fieldError {
+  color: #c00;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+/* ── Contacts ── */
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contactRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #eee;
+  gap: 8px;
+}
+
+.contactRowEditing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.contactInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.contactName {
+  font-weight: bold;
+  font-size: 14px;
+  color: #222;
+}
+
+.roleBadge {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  background-color: #e8f0fb;
+  color: #1F3864;
+  white-space: nowrap;
+}
+
+.contactLink {
+  font-size: 13px;
+  color: #2E75B6;
+}
+
+.contactMeta {
+  font-size: 12px;
+  color: #888;
+}
+
+.contactActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.editContactButton {
+  background-color: transparent;
+  color: #2E75B6;
+  border: 1px solid #2E75B6;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.removeButton {
+  background-color: transparent;
+  color: #c00;
+  border: 1px solid #c00;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* ── Journal ── */
+.journalList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.journalEntry {
+  padding: 12px 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+.journalEntryHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.journalEntryMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.journalTypeBadge {
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: #e8f0fb;
+  color: #1F3864;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.journalDate {
+  font-size: 12px;
+  color: #888;
+}
+
+.journalNotes {
+  font-size: 13px;
+  color: #444;
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* ── Job Description ── */
+.jobDescription {
+  font-size: 13px;
+  color: #444;
+  line-height: 1.6;
+  background-color: #f9f9f9;
+  padding: 16px;
+  border-radius: 4px;
+}
+
+.jobDescription ul,
+.jobDescription ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+
+.jobDescription li {
+  margin: 4px 0;
+}
+
+.jobDescription p {
+  margin: 8px 0;
+}
+
+/* ── Danger zone ── */
+.deleteWarning {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.deleteButton {
+  background-color: #c00000;
+  color: #fff;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .headerInfo {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .statusBadge {
+    margin-left: 0;
+    order: 4;
+    flex-basis: 100%;
+    text-align: center;
+    padding: 6px 14px;
+  }
+
+  .content {
+    margin: 16px auto;
+    padding: 0 16px;
+    gap: 16px;
+  }
+
+  .card {
+    padding: 16px;
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .formRow {
+    flex-wrap: wrap;
+  }
+
+  .formRow .input {
+    flex: 1 1 140px;
+  }
+
+  .contactRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .contactActions {
+    align-self: flex-end;
+  }
+
+  .journalEntryHeader {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 16px;
+  }
+
+  .company {
+    font-size: 13px;
+  }
+}
