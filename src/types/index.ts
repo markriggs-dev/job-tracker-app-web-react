@@ -119,3 +119,41 @@ export interface CreateAndAddContactRequest {
   agencyName?: string;
   roleType: ContactRoleType;
 }
+
+export const InteractionType = {
+  PhoneScreen: 'PhoneScreen',
+  Email: 'Email',
+  Interview: 'Interview',
+  OfferDiscussion: 'OfferDiscussion',
+  Rejection: 'Rejection',
+  FollowUp: 'FollowUp',
+  ApplicationSubmitted: 'ApplicationSubmitted',
+  RecruiterOutreach: 'RecruiterOutreach',
+  Networking: 'Networking',
+  Note: 'Note'
+} as const;
+
+export type InteractionType = typeof InteractionType[keyof typeof InteractionType];
+
+export interface JournalEntryResponse {
+  id: string;
+  jobRequisitionId: string;
+  interactionType: InteractionType;
+  interactionTypeDisplay: string;
+  notes?: string;
+  entryDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateJournalEntryRequest {
+  interactionType: InteractionType;
+  notes?: string;
+  entryDate: string;
+}
+
+export interface UpdateJournalEntryRequest {
+  interactionType: InteractionType;
+  notes?: string;
+  entryDate: string;
+}

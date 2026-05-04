@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
-import { JobStatus, ContactRoleType } from "../../types";
-import type { CreateAndAddContactRequest, UpdateContactRequest } from "../../types";
+import { journalService } from "../../services/journalService";
+import { JobStatus, ContactRoleType, InteractionType } from "../../types";
+import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
 
 const statusColors: Record<string, string> = {
   Discovered: "#6c757d",
@@ -111,6 +112,53 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setEditingId(null);
+    },
+  });
+
+  const emptyJournalForm: CreateJournalEntryRequest = {
+    interactionType: InteractionType.Note,
+    notes: "",
+    entryDate: new Date().toISOString().split("T")[0],
+  };
+
+  const [showAddJournal, setShowAddJournal] = useState(false);
+  const [journalForm, setJournalForm] = useState<CreateJournalEntryRequest>(emptyJournalForm);
+  const [editingJournalId, setEditingJournalId] = useState<string | null>(null);
+  const [journalEditForm, setJournalEditForm] = useState<UpdateJournalEntryRequest>({
+    interactionType: InteractionType.Note,
+    notes: "",
+    entryDate: new Date().toISOString().split("T")[0],
+  });
+
+  const { data: journalEntries = [] } = useQuery({
+    queryKey: ["journal", id],
+    queryFn: () => journalService.getEntriesForJob(id!),
+    enabled: !!id,
+  });
+
+  const addJournalMutation = useMutation({
+    mutationFn: (data: CreateJournalEntryRequest) =>
+      journalService.create(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journal", id] });
+      setShowAddJournal(false);
+      setJournalForm(emptyJournalForm);
+    },
+  });
+
+  const updateJournalMutation = useMutation({
+    mutationFn: ({ entryId, data }: { entryId: string; data: UpdateJournalEntryRequest }) =>
+      journalService.update(id!, entryId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journal", id] });
+      setEditingJournalId(null);
+    },
+  });
+
+  const deleteJournalMutation = useMutation({
+    mutationFn: (entryId: string) => journalService.delete(id!, entryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["journal", id] });
     },
   });
 
@@ -382,6 +430,139 @@ const JobDetailPage = () => {
           )}
         </div>
 
+        {/* Journal */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.sectionTitle}>Journal</h2>
+            <button style={styles.addButton} onClick={() => setShowAddJournal(v => !v)}>
+              {showAddJournal ? "Cancel" : "+ Add Entry"}
+            </button>
+          </div>
+
+          {showAddJournal && (
+            <div style={styles.addForm}>
+              <div style={styles.formRow}>
+                <select
+                  style={styles.input}
+                  value={journalForm.interactionType}
+                  onChange={e => setJournalForm(f => ({ ...f, interactionType: e.target.value as CreateJournalEntryRequest["interactionType"] }))}
+                >
+                  {Object.values(InteractionType).map(t => (
+                    <option key={t} value={t}>{t.replace(/([A-Z])/g, " $1").trim()}</option>
+                  ))}
+                </select>
+                <input
+                  type="date"
+                  style={styles.input}
+                  value={journalForm.entryDate}
+                  onChange={e => setJournalForm(f => ({ ...f, entryDate: e.target.value }))}
+                />
+              </div>
+              <textarea
+                style={styles.textarea}
+                placeholder="Notes (optional)"
+                value={journalForm.notes ?? ""}
+                rows={3}
+                onChange={e => setJournalForm(f => ({ ...f, notes: e.target.value }))}
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button
+                  style={styles.saveButton}
+                  disabled={addJournalMutation.isPending}
+                  onClick={() => addJournalMutation.mutate(journalForm)}
+                >
+                  {addJournalMutation.isPending ? "Saving..." : "Save Entry"}
+                </button>
+              </div>
+              {addJournalMutation.isError && (
+                <p style={{ color: "#c00", fontSize: "13px", margin: 0 }}>Failed to save entry.</p>
+              )}
+            </div>
+          )}
+
+          {journalEntries.length === 0 && !showAddJournal ? (
+            <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No journal entries yet.</p>
+          ) : (
+            <div style={styles.journalList}>
+              {journalEntries.map(entry => (
+                <div key={entry.id} style={styles.journalEntry}>
+                  {editingJournalId === entry.id ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      <div style={styles.formRow}>
+                        <select
+                          style={styles.input}
+                          value={journalEditForm.interactionType}
+                          onChange={e => setJournalEditForm(f => ({ ...f, interactionType: e.target.value as UpdateJournalEntryRequest["interactionType"] }))}
+                        >
+                          {Object.values(InteractionType).map(t => (
+                            <option key={t} value={t}>{t.replace(/([A-Z])/g, " $1").trim()}</option>
+                          ))}
+                        </select>
+                        <input
+                          type="date"
+                          style={styles.input}
+                          value={journalEditForm.entryDate}
+                          onChange={e => setJournalEditForm(f => ({ ...f, entryDate: e.target.value }))}
+                        />
+                      </div>
+                      <textarea
+                        style={styles.textarea}
+                        rows={3}
+                        value={journalEditForm.notes ?? ""}
+                        onChange={e => setJournalEditForm(f => ({ ...f, notes: e.target.value }))}
+                      />
+                      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                        <button style={styles.cancelEditButton} onClick={() => setEditingJournalId(null)}>Cancel</button>
+                        <button
+                          style={styles.saveButton}
+                          disabled={updateJournalMutation.isPending}
+                          onClick={() => updateJournalMutation.mutate({ entryId: entry.id, data: journalEditForm })}
+                        >
+                          {updateJournalMutation.isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={styles.journalEntryHeader}>
+                        <div style={styles.journalEntryMeta}>
+                          <span style={styles.journalTypeBadge}>{entry.interactionTypeDisplay}</span>
+                          <span style={styles.journalDate}>
+                            {new Date(entry.entryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                          </span>
+                        </div>
+                        <div style={{ display: "flex", gap: "6px" }}>
+                          <button
+                            style={styles.editContactButton}
+                            onClick={() => {
+                              setEditingJournalId(entry.id);
+                              setJournalEditForm({
+                                interactionType: entry.interactionType,
+                                notes: entry.notes,
+                                entryDate: entry.entryDate.split("T")[0],
+                              });
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            style={styles.removeButton}
+                            onClick={() => deleteJournalMutation.mutate(entry.id)}
+                            disabled={deleteJournalMutation.isPending}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      {entry.notes && <p style={styles.journalNotes}>{entry.notes}</p>}
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Job Description */}
         {job.jobDescription && (
           <div style={styles.card}>
@@ -567,6 +748,28 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "4px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px",
     whiteSpace: "nowrap" as const,
   },
+  textarea: {
+    width: "100%", padding: "8px 10px", border: "1px solid #ddd",
+    borderRadius: "4px", fontSize: "13px", resize: "vertical" as const,
+    fontFamily: "Arial, sans-serif", boxSizing: "border-box" as const,
+  },
+  journalList: { display: "flex", flexDirection: "column", gap: "12px" },
+  journalEntry: {
+    padding: "12px 16px", backgroundColor: "#f9f9f9",
+    borderRadius: "4px", border: "1px solid #eee",
+  },
+  journalEntryHeader: {
+    display: "flex", justifyContent: "space-between",
+    alignItems: "center", marginBottom: "8px",
+  },
+  journalEntryMeta: { display: "flex", alignItems: "center", gap: "12px" },
+  journalTypeBadge: {
+    fontSize: "11px", fontWeight: "bold", padding: "2px 8px",
+    borderRadius: "10px", backgroundColor: "#e8f0fb", color: "#1F3864",
+    letterSpacing: "0.3px",
+  },
+  journalDate: { fontSize: "12px", color: "#888" },
+  journalNotes: { fontSize: "13px", color: "#444", margin: 0, lineHeight: "1.5", whiteSpace: "pre-wrap" as const },
   deleteWarning: { fontSize: "13px", color: "#666", marginBottom: "16px" },
   deleteButton: {
     backgroundColor: "#c00000",
