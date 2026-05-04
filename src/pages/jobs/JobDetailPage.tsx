@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
 import { JobStatus, ContactRoleType } from "../../types";
-import type { CreateAndAddContactRequest } from "../../types";
+import type { CreateAndAddContactRequest, UpdateContactRequest } from "../../types";
 
 const statusColors: Record<string, string> = {
   Discovered: "#6c757d",
@@ -16,6 +16,15 @@ const statusColors: Record<string, string> = {
   Closed: "#c00000",
   Withdrawn: "#999",
 };
+
+const AGENCY_ROLES = new Set<string>([ContactRoleType.AgencyRecruiter, ContactRoleType.AgencyAccountManager]);
+const COMPANY_ROLES = new Set<string>([ContactRoleType.CompanyRecruiter, ContactRoleType.HiringManager]);
+
+function getOrgLabel(roleType: string): string {
+  if (AGENCY_ROLES.has(roleType)) return "Agency";
+  if (COMPANY_ROLES.has(roleType)) return "Company";
+  return "Organization";
+}
 
 const emptyContactForm: CreateAndAddContactRequest = {
   name: "",
@@ -31,6 +40,9 @@ const JobDetailPage = () => {
   const queryClient = useQueryClient();
   const [showAddContact, setShowAddContact] = useState(false);
   const [contactForm, setContactForm] = useState<CreateAndAddContactRequest>(emptyContactForm);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<UpdateContactRequest>({ name: "", email: "", linkedInUrl: "", agencyName: "" });
+  const [editRoleType, setEditRoleType] = useState<ContactRoleType>(ContactRoleType.CompanyRecruiter);
 
   const {
     data: job,
@@ -63,6 +75,15 @@ const JobDetailPage = () => {
     enabled: !!id,
   });
 
+  const { data: allContacts = [] } = useQuery({
+    queryKey: ["contacts"],
+    queryFn: () => contactService.getAll(),
+  });
+
+  const orgSuggestions = Array.from(
+    new Set(allContacts.map(c => c.agencyName).filter((n): n is string => !!n))
+  );
+
   const addContactMutation = useMutation({
     mutationFn: (data: CreateAndAddContactRequest) =>
       contactService.createAndAddContactToJob(id!, data),
@@ -78,6 +99,18 @@ const JobDetailPage = () => {
       contactService.removeContactFromJob(id!, linkId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
+    },
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: async ({ contactId, linkId, data, roleType }: { contactId: string; linkId: string; data: UpdateContactRequest; roleType: ContactRoleType }) => {
+      await contactService.update(contactId, data);
+      await contactService.updateContactRole(id!, linkId, { roleType });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      setEditingId(null);
     },
   });
 
@@ -227,10 +260,14 @@ const JobDetailPage = () => {
               <div style={styles.formRow}>
                 <input
                   style={styles.input}
-                  placeholder="Agency Name"
+                  placeholder={`${getOrgLabel(contactForm.roleType)} Name`}
                   value={contactForm.agencyName ?? ""}
+                  list="org-name-suggestions"
                   onChange={e => setContactForm(f => ({ ...f, agencyName: e.target.value }))}
                 />
+                <datalist id="org-name-suggestions">
+                  {orgSuggestions.map(name => <option key={name} value={name} />)}
+                </datalist>
                 <button
                   style={styles.saveButton}
                   disabled={!contactForm.name.trim() || addContactMutation.isPending}
@@ -250,23 +287,95 @@ const JobDetailPage = () => {
           ) : (
             <div style={styles.contactList}>
               {jobContacts.map(c => (
-                <div key={c.id} style={styles.contactRow}>
-                  <div style={styles.contactInfo}>
-                    <span style={styles.contactName}>{c.contactName}</span>
-                    <span style={{ ...styles.roleBadge, backgroundColor: "#e8f0fb", color: "#1F3864" }}>
-                      {c.roleTypeDisplay}
-                    </span>
-                    {c.email && <a href={`mailto:${c.email}`} style={styles.contactLink}>{c.email}</a>}
-                    {c.linkedInUrl && <a href={c.linkedInUrl} target="_blank" rel="noreferrer" style={styles.contactLink}>LinkedIn</a>}
-                    {c.agencyName && <span style={styles.contactMeta}>{c.agencyName}</span>}
-                  </div>
-                  <button
-                    style={styles.removeButton}
-                    onClick={() => removeContactMutation.mutate(c.id)}
-                    disabled={removeContactMutation.isPending}
-                  >
-                    Remove
-                  </button>
+                <div key={c.id} style={{ ...styles.contactRow, flexDirection: editingId === c.id ? "column" : "row", alignItems: editingId === c.id ? "stretch" : "center", gap: editingId === c.id ? "16px" : undefined }}>
+                  {editingId === c.id ? (
+                    <>
+                      <div style={styles.formRow}>
+                        <input
+                          style={styles.input}
+                          placeholder="Name *"
+                          value={editForm.name}
+                          onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                        />
+                        <select
+                          style={styles.input}
+                          value={editRoleType}
+                          onChange={e => setEditRoleType(e.target.value as ContactRoleType)}
+                        >
+                          {Object.values(ContactRoleType).map(r => (
+                            <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div style={styles.formRow}>
+                        <input
+                          style={styles.input}
+                          placeholder="Email"
+                          value={editForm.email ?? ""}
+                          onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                        />
+                        <input
+                          style={styles.input}
+                          placeholder="LinkedIn URL"
+                          value={editForm.linkedInUrl ?? ""}
+                          onChange={e => setEditForm(f => ({ ...f, linkedInUrl: e.target.value }))}
+                        />
+                      </div>
+                      <div style={styles.formRow}>
+                        <input
+                          style={styles.input}
+                          placeholder={`${getOrgLabel(editRoleType)} Name`}
+                          value={editForm.agencyName ?? ""}
+                          list="org-name-suggestions"
+                          onChange={e => setEditForm(f => ({ ...f, agencyName: e.target.value }))}
+                        />
+                      </div>
+                      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", }}>
+                        <button style={styles.cancelEditButton} onClick={() => setEditingId(null)}>Cancel</button>
+                        <button
+                          style={styles.saveButton}
+                          disabled={!editForm.name.trim() || updateContactMutation.isPending}
+                          onClick={() => updateContactMutation.mutate({ contactId: c.contactId, linkId: c.id, data: editForm, roleType: editRoleType })}
+                        >
+                          {updateContactMutation.isPending ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                      {updateContactMutation.isError && (
+                        <p style={{ color: "#c00", fontSize: "13px", margin: "4px 0 0" }}>Failed to save changes.</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <div style={styles.contactInfo}>
+                        <span style={styles.contactName}>{c.contactName}</span>
+                        <span style={{ ...styles.roleBadge, backgroundColor: "#e8f0fb", color: "#1F3864" }}>
+                          {c.roleTypeDisplay}
+                        </span>
+                        {c.email && <a href={`mailto:${c.email}`} style={styles.contactLink}>{c.email}</a>}
+                        {c.linkedInUrl && <a href={c.linkedInUrl} target="_blank" rel="noreferrer" style={styles.contactLink}>LinkedIn</a>}
+                        {c.agencyName && <span style={styles.contactMeta}>{getOrgLabel(c.roleType)}: {c.agencyName}</span>}
+                      </div>
+                      <div style={{ display: "flex", gap: "6px" }}>
+                        <button
+                          style={styles.editContactButton}
+                          onClick={() => {
+                            setEditingId(c.id);
+                            setEditRoleType(c.roleType as ContactRoleType);
+                            setEditForm({ name: c.contactName, email: c.email, linkedInUrl: c.linkedInUrl, agencyName: c.agencyName });
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          style={styles.removeButton}
+                          onClick={() => removeContactMutation.mutate(c.id)}
+                          disabled={removeContactMutation.isPending}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -419,7 +528,7 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundColor: "#2E75B6", color: "#fff", border: "none",
     padding: "6px 14px", borderRadius: "4px", cursor: "pointer", fontSize: "13px",
   },
-  addForm: { marginBottom: "16px", display: "flex", flexDirection: "column", gap: "8px" },
+  addForm: { marginBottom: "16px", display: "flex", flexDirection: "column", gap: "16px" },
   formRow: { display: "flex", gap: "8px" },
   input: {
     flex: 1, padding: "7px 10px", border: "1px solid #ddd",
@@ -444,6 +553,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   contactLink: { fontSize: "13px", color: "#2E75B6" },
   contactMeta: { fontSize: "12px", color: "#888" },
+  editContactButton: {
+    backgroundColor: "transparent", color: "#2E75B6", border: "1px solid #2E75B6",
+    padding: "4px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px",
+    whiteSpace: "nowrap" as const,
+  },
+  cancelEditButton: {
+    backgroundColor: "transparent", color: "#666", border: "1px solid #ccc",
+    padding: "6px 14px", borderRadius: "4px", cursor: "pointer", fontSize: "13px",
+  },
   removeButton: {
     backgroundColor: "transparent", color: "#c00", border: "1px solid #c00",
     padding: "4px 10px", borderRadius: "4px", cursor: "pointer", fontSize: "12px",

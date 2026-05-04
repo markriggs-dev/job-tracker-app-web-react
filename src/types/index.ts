@@ -108,6 +108,10 @@ export interface AddContactToJobRequest {
   roleType: ContactRoleType;
 }
 
+export interface UpdateJobRequisitionContactRequest {
+  roleType: ContactRoleType;
+}
+
 export interface CreateAndAddContactRequest {
   name: string;
   email?: string;

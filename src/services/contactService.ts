@@ -6,7 +6,8 @@ import type {
   CreateContactRequest,
   UpdateContactRequest,
   AddContactToJobRequest,
-  CreateAndAddContactRequest
+  CreateAndAddContactRequest,
+  UpdateJobRequisitionContactRequest
 } from '../types/index';
 
 export const contactService = {
@@ -53,6 +54,11 @@ export const contactService = {
 
   createAndAddContactToJob: async (jobId: string, data: CreateAndAddContactRequest): Promise<JobRequisitionContactResponse> => {
     const response = await contactApiClient.post(`/api/jobs/${jobId}/contacts/new`, data);
+    return response.data;
+  },
+
+  updateContactRole: async (jobId: string, linkId: string, data: UpdateJobRequisitionContactRequest): Promise<JobRequisitionContactResponse> => {
+    const response = await contactApiClient.patch(`/api/jobs/${jobId}/contacts/${linkId}`, data);
     return response.data;
   },
 
