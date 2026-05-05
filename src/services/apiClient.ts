@@ -1,10 +1,23 @@
 import axios from 'axios';
 
+type TokenProvider = () => Promise<string>;
+let tokenProvider: TokenProvider | null = null;
+
+export const setTokenProvider = (fn: TokenProvider) => {
+  tokenProvider = fn;
+};
+
+const authInterceptor = async (config: import('axios').InternalAxiosRequestConfig) => {
+  if (tokenProvider) {
+    const token = await tokenProvider();
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+};
+
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  headers: { 'Content-Type': 'application/json' }
 });
 
 export const contactApiClient = axios.create({
@@ -17,17 +30,14 @@ export const journalApiClient = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
-// Token will be injected by the useApi hook
-export const setAuthToken = (token: string | null) => {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    contactApiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    journalApiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    delete apiClient.defaults.headers.common['Authorization'];
-    delete contactApiClient.defaults.headers.common['Authorization'];
-    delete journalApiClient.defaults.headers.common['Authorization'];
-  }
-};
+export const resumeApiClient = axios.create({
+  baseURL: import.meta.env.VITE_RESUME_SERVICE_URL,
+  headers: { 'Content-Type': 'application/json' }
+});
+
+apiClient.interceptors.request.use(authInterceptor);
+contactApiClient.interceptors.request.use(authInterceptor);
+journalApiClient.interceptors.request.use(authInterceptor);
+resumeApiClient.interceptors.request.use(authInterceptor);
 
 export default apiClient;

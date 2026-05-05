@@ -9,6 +9,7 @@ import DashboardPage from './pages/jobs/DashboardPage';
 import JobDetailPage from './pages/jobs/JobDetailPage';
 import CreateJobPage from './pages/jobs/CreateJobPage';
 import EditJobPage from './pages/jobs/EditJobPage';
+import ResumesPage from './pages/resumes/ResumesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -66,6 +67,11 @@ const AppRoutes = () => {
           <JobDetailPage />
         </ProtectedRoute>
       } />
+      <Route path="/resumes" element={
+        <ProtectedRoute>
+          <ResumesPage />
+        </ProtectedRoute>
+      } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -80,6 +86,8 @@ function App() {
         redirect_uri: `${window.location.origin}/callback`,
         audience: import.meta.env.VITE_AUTH0_AUDIENCE
       }}
+      cacheLocation="localstorage"
+      useRefreshTokens={true}
     >
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>

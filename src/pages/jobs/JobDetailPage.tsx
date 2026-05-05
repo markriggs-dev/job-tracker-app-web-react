@@ -5,6 +5,7 @@ import DOMPurify from "dompurify";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
 import { journalService } from "../../services/journalService";
+import { resumeService } from "../../services/resumeService";
 import { JobStatus, ContactRoleType, InteractionType } from "../../types";
 import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
 import styles from "./JobDetailPage.module.css";
@@ -159,6 +160,46 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["journal", id] });
     },
   });
+
+  const [showResumeSelector, setShowResumeSelector] = useState(false);
+
+  const { data: allResumes = [] } = useQuery({
+    queryKey: ["resumes"],
+    queryFn: resumeService.getAll,
+    enabled: !!id,
+  });
+
+  const { data: jobResume = null } = useQuery({
+    queryKey: ["jobResume", id],
+    queryFn: () => resumeService.getJobResume(id!),
+    enabled: !!id,
+  });
+
+  const linkResumeMutation = useMutation({
+    mutationFn: (resumeId: string) => resumeService.linkToJob(id!, { resumeId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
+      setShowResumeSelector(false);
+    },
+  });
+
+  const unlinkResumeMutation = useMutation({
+    mutationFn: () => resumeService.unlinkFromJob(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
+    },
+  });
+
+  const handleDownloadResume = (resumeId: string, fileName: string) => {
+    resumeService.downloadFile(resumeId).then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  };
 
   if (isLoading) return <div className={styles.message}>Loading...</div>;
   if (error || !job) return <div className={styles.message}>Job not found.</div>;
@@ -542,6 +583,70 @@ const JobDetailPage = () => {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+
+        {/* Resume */}
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <h2 className={styles.sectionTitle}>Resume Submitted</h2>
+            {!showResumeSelector && (
+              <button className={styles.addButton} onClick={() => setShowResumeSelector(true)}>
+                {jobResume ? "Change" : "+ Link Resume"}
+              </button>
+            )}
+          </div>
+
+          {showResumeSelector && (
+            <div className={styles.addForm}>
+              <select
+                className={styles.input}
+                defaultValue=""
+                onChange={e => { if (e.target.value) linkResumeMutation.mutate(e.target.value); }}
+                disabled={linkResumeMutation.isPending}
+              >
+                <option value="" disabled>Select a resume…</option>
+                {allResumes.map(r => (
+                  <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
+                ))}
+              </select>
+              <div className={styles.formActions}>
+                <button className={styles.cancelEditButton} onClick={() => setShowResumeSelector(false)}>Cancel</button>
+              </div>
+              {allResumes.length === 0 && (
+                <p className={styles.fieldError}>No resumes uploaded yet. <button className={styles.linkButton} onClick={() => navigate('/resumes')}>Upload one</button> first.</p>
+              )}
+            </div>
+          )}
+
+          {jobResume ? (
+            <div className={styles.contactRow}>
+              <div className={styles.contactInfo}>
+                <span className={styles.contactName}>{jobResume.fileName}</span>
+                <span className={styles.contactMeta}>
+                  {jobResume.fileSizeDisplay} · Linked {new Date(jobResume.linkedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                </span>
+              </div>
+              <div className={styles.contactActions}>
+                <button
+                  className={styles.editContactButton}
+                  onClick={() => handleDownloadResume(jobResume.resumeId, jobResume.fileName)}
+                >
+                  Download
+                </button>
+                <button
+                  className={styles.removeButton}
+                  onClick={() => unlinkResumeMutation.mutate()}
+                  disabled={unlinkResumeMutation.isPending}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            !showResumeSelector && (
+              <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No resume linked to this application yet.</p>
+            )
           )}
         </div>
 

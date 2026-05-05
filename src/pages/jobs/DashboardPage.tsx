@@ -36,10 +36,11 @@ const DashboardPage = () => {
       <div className={styles.header}>
         <h1 className={styles.title}>Job Tracker</h1>
         <div className={styles.headerRight}>
+          <button className={styles.navLink} onClick={() => navigate('/resumes')}>Resumes</button>
           <span className={styles.userEmail}>{user?.email}</span>
           <button
             className={styles.logoutButton}
-            onClick={() => logout({ logoutParams: { returnTo: window.location.origin + '/login' } })}
+            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
           >
             Sign Out
           </button>

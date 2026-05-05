@@ -157,3 +157,27 @@ export interface UpdateJournalEntryRequest {
   notes?: string;
   entryDate: string;
 }
+
+export interface ResumeResponse {
+  id: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  fileSizeDisplay: string;
+  uploadedAt: string;
+}
+
+export interface JobResumeLinkResponse {
+  id: string;
+  jobRequisitionId: string;
+  resumeId: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  fileSizeDisplay: string;
+  linkedAt: string;
+}
+
+export interface LinkResumeToJobRequest {
+  resumeId: string;
+}

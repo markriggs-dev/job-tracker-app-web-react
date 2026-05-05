@@ -30,6 +30,20 @@
   color: #ccc;
 }
 
+.navLink {
+  background-color: transparent;
+  border: none;
+  color: #ccc;
+  padding: 6px 4px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.navLink:hover {
+  color: #fff;
+}
+
 .logoutButton {
   background-color: transparent;
   border: 1px solid #ccc;
