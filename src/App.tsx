@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from './hooks/useApi';
+import { useJobsHub } from './hooks/useJobsHub';
 import LoginPage from './pages/auth/LoginPage';
 import CallbackPage from './pages/auth/CallbackPage';
 import DashboardPage from './pages/jobs/DashboardPage';
@@ -41,7 +42,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 // Inner app with routing — useApi must be inside Auth0Provider
 const AppRoutes = () => {
-  useApi(); // Injects Auth0 token into axios on auth state change
+  useApi();      // Injects Auth0 token into axios on auth state change
+  useJobsHub();  // Connects SignalR hub, invalidates queries on job events
 
   return (
     <Routes>

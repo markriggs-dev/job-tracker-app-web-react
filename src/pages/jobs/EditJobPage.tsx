@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
 import { jobService } from '../../services/jobService';
 import type { UpdateJobRequisitionRequest } from '../../types/index';
@@ -9,7 +9,6 @@ import styles from './EditJobPage.module.css';
 const EditJobPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: job, isLoading } = useQuery({
     queryKey: ['job', id],
@@ -59,8 +58,7 @@ const EditJobPage = () => {
   const mutation = useMutation({
     mutationFn: (data: UpdateJobRequisitionRequest) => jobService.update(id!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['job', id] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      // Navigate to detail page — SignalR jobUpdated event will trigger cache invalidation
       navigate(`/jobs/${id}`);
     },
     onError: () => {
@@ -131,11 +129,11 @@ const EditJobPage = () => {
 
         <div className={styles.row}>
           <div className={styles.field}>
-            <label className={styles.label}>Source URL</label>
+            <label className={styles.label}>Found On URL</label>
             <input className={styles.input} name="sourceUrl" value={form.sourceUrl} onChange={handleChange} placeholder="Where you found the posting" />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Company Career Portal URL</label>
+            <label className={styles.label}>Apply At URL</label>
             <input className={styles.input} name="companyCareerPortalUrl" value={form.companyCareerPortalUrl} onChange={handleChange} placeholder="Direct link on company site" />
           </div>
         </div>

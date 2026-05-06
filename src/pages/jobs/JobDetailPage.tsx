@@ -267,18 +267,18 @@ const JobDetailPage = () => {
               <span className={styles.detailValue}>{job.applicationExpiryDate || "—"}</span>
             </div>
             <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Source URL</span>
+              <span className={styles.detailLabel}>Found On</span>
               <span className={styles.detailValue}>
                 {job.sourceUrl ? (
-                  <a href={job.sourceUrl} target="_blank" rel="noreferrer">{job.sourceUrl}</a>
+                  <a href={job.sourceUrl} target="_blank" rel="noreferrer">View ↗</a>
                 ) : "—"}
               </span>
             </div>
             <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Career Portal URL</span>
+              <span className={styles.detailLabel}>Apply At</span>
               <span className={styles.detailValue}>
                 {job.companyCareerPortalUrl ? (
-                  <a href={job.companyCareerPortalUrl} target="_blank" rel="noreferrer">{job.companyCareerPortalUrl}</a>
+                  <a href={job.companyCareerPortalUrl} target="_blank" rel="noreferrer">View ↗</a>
                 ) : "—"}
               </span>
             </div>

@@ -3,6 +3,7 @@ import apiClient from './apiClient';
 import type {
   JobRequisition,
   JobRequisitionListItem,
+  JobRequisitionAcceptedResponse,
   CreateJobRequisitionRequest,
   UpdateJobRequisitionRequest,
   UpdateJobStatusRequest
@@ -29,12 +30,12 @@ export const jobService = {
     return response.data;
   },
 
-  create: async (data: CreateJobRequisitionRequest): Promise<JobRequisition> => {
+  create: async (data: CreateJobRequisitionRequest): Promise<JobRequisitionAcceptedResponse> => {
     const response = await apiClient.post('/api/jobs', data);
     return response.data;
   },
 
-  update: async (id: string, data: UpdateJobRequisitionRequest): Promise<JobRequisition> => {
+  update: async (id: string, data: UpdateJobRequisitionRequest): Promise<JobRequisitionAcceptedResponse> => {
     const response = await apiClient.put(`/api/jobs/${id}`, data);
     return response.data;
   },

@@ -31,16 +31,8 @@ export const resumeService = {
   },
 
   getJobResume: async (jobId: string): Promise<JobResumeLinkResponse | null> => {
-    try {
-      const response = await apiClient.get(`/api/jobs/${jobId}/resume`);
-      return response.data;
-    } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
-        const axiosErr = err as { response: { status: number } };
-        if (axiosErr.response?.status === 404) return null;
-      }
-      throw err;
-    }
+    const response = await apiClient.get(`/api/jobs/${jobId}/resume`);
+    return response.data;
   },
 
   linkToJob: async (jobId: string, data: LinkResumeToJobRequest): Promise<JobResumeLinkResponse> => {

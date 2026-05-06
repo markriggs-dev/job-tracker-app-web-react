@@ -56,6 +56,11 @@ export interface UpdateJobStatusRequest {
   status: JobStatus;
 }
 
+export interface JobRequisitionAcceptedResponse {
+  jobReqId: string;
+  message: string;
+}
+
 export const ContactRoleType = {
   AgencyRecruiter: 'AgencyRecruiter',
   AgencyAccountManager: 'AgencyAccountManager',

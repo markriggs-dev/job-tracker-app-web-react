@@ -1,31 +1,50 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
+import DOMPurify from 'dompurify';
 import { jobService } from '../../services/jobService';
 import type { CreateJobRequisitionRequest } from '../../types/index';
 import styles from './CreateJobPage.module.css';
 
 const CreateJobPage = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
-  const [form, setForm] = useState<CreateJobRequisitionRequest>({
+  const [form, setForm] = useState({
     companyName: '',
     roleTitle: '',
     sourceUrl: '',
     companyCareerPortalUrl: '',
-    jobDescription: '',
     dateDiscovered: new Date().toISOString().split('T')[0],
     applicationExpiryDate: ''
   });
 
   const [error, setError] = useState('');
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [editorEmpty, setEditorEmpty] = useState(true);
+
+  const handleDescriptionPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    const sanitized = html
+      ? DOMPurify.sanitize(html, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'a', 'div', 'span'],
+          ALLOWED_ATTR: ['href', 'target'],
+        })
+      : text.replace(/\n/g, '<br>');
+    document.execCommand('insertHTML', false, sanitized);
+    setEditorEmpty(false);
+  };
+
+  const handleDescriptionInput = () => {
+    setEditorEmpty(!editorRef.current?.textContent?.trim());
+  };
 
   const mutation = useMutation({
     mutationFn: jobService.create,
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      navigate(`/jobs/${data.id}`);
+    onSuccess: () => {
+      // Navigate to dashboard — SignalR jobCreated event will trigger list refresh
+      navigate('/');
     },
     onError: () => {
       setError('Failed to create job requisition. Please try again.');
@@ -41,11 +60,12 @@ const CreateJobPage = () => {
     if (!form.roleTitle.trim()) { setError('Role title is required.'); return; }
     if (!form.dateDiscovered) { setError('Date discovered is required.'); return; }
     setError('');
+    const jobDescription = editorRef.current?.innerHTML?.trim() || undefined;
     mutation.mutate({
       ...form,
       sourceUrl: form.sourceUrl || undefined,
       companyCareerPortalUrl: form.companyCareerPortalUrl || undefined,
-      jobDescription: form.jobDescription || undefined,
+      jobDescription,
       applicationExpiryDate: form.applicationExpiryDate || undefined
     });
   };
@@ -73,11 +93,11 @@ const CreateJobPage = () => {
 
         <div className={styles.row}>
           <div className={styles.field}>
-            <label className={styles.label}>Source URL</label>
+            <label className={styles.label}>Found On URL</label>
             <input className={styles.input} name="sourceUrl" value={form.sourceUrl} onChange={handleChange} placeholder="Where you found the posting" />
           </div>
           <div className={styles.field}>
-            <label className={styles.label}>Company Career Portal URL</label>
+            <label className={styles.label}>Apply At URL</label>
             <input className={styles.input} name="companyCareerPortalUrl" value={form.companyCareerPortalUrl} onChange={handleChange} placeholder="Direct link on company site" />
           </div>
         </div>
@@ -95,14 +115,21 @@ const CreateJobPage = () => {
 
         <div className={styles.fieldFull}>
           <label className={styles.label}>Job Description</label>
-          <textarea
-            className={styles.textarea}
-            name="jobDescription"
-            value={form.jobDescription}
-            onChange={handleChange}
-            placeholder="Paste the full job description here for reference..."
-            rows={10}
-          />
+          <div className={styles.editorWrapper}>
+            <div
+              ref={editorRef}
+              contentEditable
+              suppressContentEditableWarning
+              onPaste={handleDescriptionPaste}
+              onInput={handleDescriptionInput}
+              className={styles.editor}
+            />
+            {editorEmpty && (
+              <span className={styles.editorPlaceholder} onClick={() => editorRef.current?.focus()}>
+                Paste the full job description here — formatting, bullets, and structure will be preserved.
+              </span>
+            )}
+          </div>
         </div>
 
         <div className={styles.actions}>
