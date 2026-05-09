@@ -205,9 +205,12 @@ const JobDetailPage = () => {
   };
 
   // ── AI / Resume Generation ──
-  const [selectedExperienceId, setSelectedExperienceId] = useState("");
-  const [selectedAiProfileId, setSelectedAiProfileId] = useState("");
-  const [generateError, setGenerateError] = useState("");
+  const [apiExperienceId, setApiExperienceId] = useState("");
+  const [apiAiProfileId, setApiAiProfileId] = useState("");
+  const [claudeExperienceId, setClaudeExperienceId] = useState("");
+  const [claudeAiProfileId, setClaudeAiProfileId] = useState("");
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [promptCopied, setPromptCopied] = useState(false);
 
   const { data: experienceProfiles = [] } = useQuery({
     queryKey: ["experience-profiles"],
@@ -229,12 +232,42 @@ const JobDetailPage = () => {
 
   const generateMutation = useMutation({
     mutationFn: (data: GenerateResumeRequest) => aiService.generateResume(id!, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] });
-      setGenerateError("");
-    },
-    onError: () => setGenerateError("Resume generation failed. Make sure the job has a description and both profiles are selected."),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] }),
   });
+
+  const handleGeneratePrompt = () => {
+    const aiProfile = aiProfiles.find(p => p.id === claudeAiProfileId);
+    const expProfile = experienceProfiles.find(p => p.id === claudeExperienceId);
+    if (!aiProfile || !expProfile) return;
+
+    const jobDesc = job?.jobDescription
+      ? job.jobDescription.replace(/<[^>]*>/g, "").trim()
+      : `(No description provided — role: ${job?.roleTitle} at ${job?.companyName})`;
+
+    setGeneratedPrompt(
+      `You are an expert resume writer. Generate a tailored, ATS-optimized resume.\n\n` +
+      `## Strict Rules\n` +
+      `- Only use skills, roles, and accomplishments from the attached experience document.\n` +
+      `- Do NOT invent, embellish, or infer any experience not explicitly stated.\n` +
+      `- Do NOT include experience older than 15 years unless the instructions below override this.\n` +
+      `- Align keywords from the job description to phrasing in the experience document where accurate.\n` +
+      `- Output clean, professional Markdown suitable for conversion to Word or PDF.\n\n` +
+      `## Instructions\n${aiProfile.instructions}\n\n` +
+      `## Job Description\n${jobDesc}\n\n` +
+      `## Experience Document\n` +
+      `[Attached — see the file "${expProfile.fileName}" attached to this message]\n\n` +
+      `## Output\n` +
+      `Generate a complete tailored resume in Markdown based solely on the attached experience document and the job description above.`
+    );
+    setPromptCopied(false);
+  };
+
+  const handleCopyPrompt = () => {
+    navigator.clipboard.writeText(generatedPrompt).then(() => {
+      setPromptCopied(true);
+      setTimeout(() => setPromptCopied(false), 2500);
+    });
+  };
 
   const deleteGeneratedMutation = useMutation({
     mutationFn: (resumeId: string) => aiService.deleteGeneratedResume(id!, resumeId),
@@ -729,31 +762,52 @@ const JobDetailPage = () => {
       {/* ── AI TAB ── */}
       {activeTab === "ai" && (
         <>
+          {/* API Service Model */}
           <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <p className={styles.sectionTitle}>Generate Tailored Resume</p>
+            <div className={styles.aiModelHeader}>
+              <p className={styles.sectionTitle}>API Service Model</p>
+              <span className={styles.comingSoonBadge}>Coming Soon</span>
             </div>
+            <p className={styles.aiModelDesc}>
+              Direct in-app generation via Anthropic API — resumes are created and stored without leaving the app.
+            </p>
             <div className={styles.addForm}>
               <div className={styles.formRow}>
-                <select
-                  className={styles.input}
-                  value={selectedExperienceId}
-                  onChange={e => setSelectedExperienceId(e.target.value)}
-                >
+                <select className={styles.input} value={apiExperienceId} onChange={e => setApiExperienceId(e.target.value)}>
                   <option value="">Select experience profile…</option>
-                  {experienceProfiles.map(p => (
-                    <option key={p.id} value={p.id}>{p.profileName}</option>
-                  ))}
+                  {experienceProfiles.map(p => <option key={p.id} value={p.id}>{p.profileName}</option>)}
                 </select>
-                <select
-                  className={styles.input}
-                  value={selectedAiProfileId}
-                  onChange={e => setSelectedAiProfileId(e.target.value)}
-                >
+                <select className={styles.input} value={apiAiProfileId} onChange={e => setApiAiProfileId(e.target.value)}>
                   <option value="">Select AI profile…</option>
-                  {aiProfiles.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
+                  {aiProfiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className={styles.formActions}>
+                <button className={styles.saveMiniBtn} disabled title="API integration coming soon">
+                  Generate Resume
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Claude.AI Model */}
+          <div className={styles.card}>
+            <div className={styles.aiModelHeader}>
+              <p className={styles.sectionTitle}>Claude.AI Model</p>
+              <span className={styles.availableBadge}>Available</span>
+            </div>
+            <p className={styles.aiModelDesc}>
+              Works with your Claude.ai subscription — generates a ready-to-use prompt you paste directly into Claude.ai with your experience document attached.
+            </p>
+            <div className={styles.addForm}>
+              <div className={styles.formRow}>
+                <select className={styles.input} value={claudeExperienceId} onChange={e => { setClaudeExperienceId(e.target.value); setGeneratedPrompt(""); }}>
+                  <option value="">Select experience profile…</option>
+                  {experienceProfiles.map(p => <option key={p.id} value={p.id}>{p.profileName}</option>)}
+                </select>
+                <select className={styles.input} value={claudeAiProfileId} onChange={e => { setClaudeAiProfileId(e.target.value); setGeneratedPrompt(""); }}>
+                  <option value="">Select AI profile…</option>
+                  {aiProfiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
               {experienceProfiles.length === 0 && (
@@ -768,19 +822,37 @@ const JobDetailPage = () => {
                   <button className={styles.linkBtn} onClick={() => navigate("/ai-profiles")}>Create one</button> first.
                 </p>
               )}
-              {generateError && <p className={styles.fieldError}>{generateError}</p>}
               <div className={styles.formActions}>
                 <button
                   className={styles.saveMiniBtn}
-                  disabled={!selectedExperienceId || !selectedAiProfileId || generateMutation.isPending}
-                  onClick={() => generateMutation.mutate({ experienceProfileId: selectedExperienceId, aiProfileId: selectedAiProfileId })}
+                  disabled={!claudeExperienceId || !claudeAiProfileId}
+                  onClick={handleGeneratePrompt}
                 >
-                  {generateMutation.isPending ? "Generating… (this may take 15–30s)" : "Generate Resume"}
+                  Generate Prompt
                 </button>
               </div>
             </div>
+
+            {generatedPrompt && (
+              <div className={styles.promptBlock}>
+                <div className={styles.promptBlockHeader}>
+                  <p className={styles.promptBlockTitle}>Your prompt is ready</p>
+                  <button className={styles.copyBtn} onClick={handleCopyPrompt}>
+                    {promptCopied ? "Copied!" : "Copy to Clipboard"}
+                  </button>
+                </div>
+                <textarea className={styles.promptTextarea} readOnly rows={10} value={generatedPrompt} />
+                <ol className={styles.promptSteps}>
+                  <li>Copy the prompt above</li>
+                  <li>Open <a href="https://claude.ai" target="_blank" rel="noreferrer">claude.ai</a> and start a new conversation</li>
+                  <li>Attach your <strong>{experienceProfiles.find(p => p.id === claudeExperienceId)?.fileName}</strong> experience document</li>
+                  <li>Paste the prompt and send</li>
+                </ol>
+              </div>
+            )}
           </div>
 
+          {/* Generated Resumes */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <p className={styles.sectionTitle}>Generated Resumes</p>
@@ -789,7 +861,7 @@ const JobDetailPage = () => {
               <div className={styles.emptyState}>
                 <Cpu size={36} color="#CBD5E1" strokeWidth={1.5} />
                 <p className={styles.emptyTitle}>No generated resumes yet</p>
-                <p className={styles.emptySubtitle}>Select an experience profile and AI profile above, then click Generate Resume.</p>
+                <p className={styles.emptySubtitle}>Generated resumes from the API Service Model will appear here.</p>
               </div>
             ) : (
               <div className={styles.contactList}>
