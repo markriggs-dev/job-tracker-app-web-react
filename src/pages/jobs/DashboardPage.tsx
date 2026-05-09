@@ -40,7 +40,7 @@ const DashboardPage = () => {
           <span className={styles.userEmail}>{user?.email}</span>
           <button
             className={styles.logoutButton}
-            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+            onClick={() => logout({ logoutParams: { returnTo: `${window.location.origin}${import.meta.env.BASE_URL}` } })}
           >
             Sign Out
           </button>
