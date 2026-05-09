@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import type { AiProfileResponse, CreateAiProfileRequest, UpdateAiProfileRequest, GeneratedResumeResponse, GenerateResumeRequest } from '../types/index';
+import type { AiProfileResponse, CreateAiProfileRequest, UpdateAiProfileRequest, GeneratedResumeResponse, GenerateResumeRequest, BuildPromptRequest, BuildPromptResponse } from '../types/index';
 
 export const aiService = {
   // AI Profiles
@@ -25,6 +25,11 @@ export const aiService = {
   // Generated Resumes
   getGeneratedResumes: async (jobId: string): Promise<GeneratedResumeResponse[]> => {
     const response = await apiClient.get(`/api/jobs/${jobId}/generated-resumes`);
+    return response.data;
+  },
+
+  buildPrompt: async (jobId: string, data: BuildPromptRequest): Promise<BuildPromptResponse> => {
+    const response = await apiClient.post(`/api/jobs/${jobId}/generated-resumes/prompt`, data);
     return response.data;
   },
 

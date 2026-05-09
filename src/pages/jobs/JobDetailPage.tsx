@@ -211,6 +211,9 @@ const JobDetailPage = () => {
   const [claudeAiProfileId, setClaudeAiProfileId] = useState("");
   const [generatedPrompt, setGeneratedPrompt] = useState("");
   const [promptCopied, setPromptCopied] = useState(false);
+  const [experienceEmbedded, setExperienceEmbedded] = useState(false);
+  const [promptBuilding, setPromptBuilding] = useState(false);
+  const [promptError, setPromptError] = useState("");
 
   const { data: experienceProfiles = [] } = useQuery({
     queryKey: ["experience-profiles"],
@@ -235,31 +238,24 @@ const JobDetailPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] }),
   });
 
-  const handleGeneratePrompt = () => {
-    const aiProfile = aiProfiles.find(p => p.id === claudeAiProfileId);
-    const expProfile = experienceProfiles.find(p => p.id === claudeExperienceId);
-    if (!aiProfile || !expProfile) return;
-
-    const jobDesc = job?.jobDescription
-      ? job.jobDescription.replace(/<[^>]*>/g, "").trim()
-      : `(No description provided — role: ${job?.roleTitle} at ${job?.companyName})`;
-
-    setGeneratedPrompt(
-      `You are an expert resume writer. Generate a tailored, ATS-optimized resume.\n\n` +
-      `## Strict Rules\n` +
-      `- Only use skills, roles, and accomplishments from the attached experience document.\n` +
-      `- Do NOT invent, embellish, or infer any experience not explicitly stated.\n` +
-      `- Do NOT include experience older than 15 years unless the instructions below override this.\n` +
-      `- Align keywords from the job description to phrasing in the experience document where accurate.\n` +
-      `- Output clean, professional Markdown suitable for conversion to Word or PDF.\n\n` +
-      `## Instructions\n${aiProfile.instructions}\n\n` +
-      `## Job Description\n${jobDesc}\n\n` +
-      `## Experience Document\n` +
-      `[Attached — see the file "${expProfile.fileName}" attached to this message]\n\n` +
-      `## Output\n` +
-      `Generate a complete tailored resume in Markdown based solely on the attached experience document and the job description above.`
-    );
-    setPromptCopied(false);
+  const handleGeneratePrompt = async () => {
+    if (!claudeExperienceId || !claudeAiProfileId) return;
+    setPromptBuilding(true);
+    setPromptError("");
+    setGeneratedPrompt("");
+    try {
+      const result = await aiService.buildPrompt(id!, {
+        experienceProfileId: claudeExperienceId,
+        aiProfileId: claudeAiProfileId,
+      });
+      setGeneratedPrompt(result.prompt);
+      setExperienceEmbedded(result.experienceEmbedded);
+      setPromptCopied(false);
+    } catch {
+      setPromptError("Failed to build prompt. Please try again.");
+    } finally {
+      setPromptBuilding(false);
+    }
   };
 
   const handleCopyPrompt = () => {
@@ -825,12 +821,13 @@ const JobDetailPage = () => {
               <div className={styles.formActions}>
                 <button
                   className={styles.saveMiniBtn}
-                  disabled={!claudeExperienceId || !claudeAiProfileId}
+                  disabled={!claudeExperienceId || !claudeAiProfileId || promptBuilding}
                   onClick={handleGeneratePrompt}
                 >
-                  Generate Prompt
+                  {promptBuilding ? "Building prompt…" : "Generate Prompt"}
                 </button>
               </div>
+              {promptError && <p className={styles.fieldError}>{promptError}</p>}
             </div>
 
             {generatedPrompt && (
@@ -845,7 +842,9 @@ const JobDetailPage = () => {
                 <ol className={styles.promptSteps}>
                   <li>Copy the prompt above</li>
                   <li>Open <a href="https://claude.ai" target="_blank" rel="noreferrer">claude.ai</a> and start a new conversation</li>
-                  <li>Attach your <strong>{experienceProfiles.find(p => p.id === claudeExperienceId)?.fileName}</strong> experience document</li>
+                  {!experienceEmbedded && (
+                    <li>Attach your <strong>{experienceProfiles.find(p => p.id === claudeExperienceId)?.fileName}</strong> experience document</li>
+                  )}
                   <li>Paste the prompt and send</li>
                 </ol>
               </div>
