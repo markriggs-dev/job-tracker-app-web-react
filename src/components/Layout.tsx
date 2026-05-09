@@ -1,11 +1,12 @@
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, BriefcaseBusiness, LogOut } from 'lucide-react';
 import styles from './Layout.module.css';
 
 const NAV = [
-  { path: '/',        label: 'Dashboard', Icon: LayoutDashboard },
-  { path: '/resumes', label: 'Resumes',   Icon: FileText },
+  { path: '/',           label: 'Dashboard',  Icon: LayoutDashboard },
+  { path: '/resumes',    label: 'Resumes',    Icon: FileText },
+  { path: '/experience', label: 'Experience', Icon: BriefcaseBusiness },
 ];
 
 const Layout = ({ children }: { children: React.ReactNode }) => {

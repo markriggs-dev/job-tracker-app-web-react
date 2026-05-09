@@ -1,0 +1,249 @@
+.page {
+  padding: 32px 36px;
+  max-width: 800px;
+}
+
+.pageHeader {
+  margin-bottom: 28px;
+}
+
+.pageTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 16px;
+}
+
+/* ── Profile name input ── */
+.uploadFields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.profileNameInput {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+.profileNameInput:focus { border-color: var(--color-border-focus); }
+.profileNameInput::placeholder { color: var(--color-text-muted); }
+
+/* ── Upload zone ── */
+.uploadZone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 36px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.uploadZone:hover,
+.uploadZoneDragging {
+  border-color: var(--color-accent);
+  background: #EFF6FF;
+}
+
+.uploadIcon {
+  width: 44px;
+  height: 44px;
+  background: #EFF6FF;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--color-accent);
+}
+
+.uploadLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-2);
+  margin: 0 0 4px;
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.uploadingText {
+  font-size: 13px;
+  color: var(--color-accent);
+  margin: 10px 0 0;
+}
+
+.fileInput { display: none; }
+
+.uploadError {
+  color: var(--color-error);
+  font-size: 13px;
+  background: var(--color-error-bg);
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin-top: 10px;
+}
+
+/* ── Profile list ── */
+.profileList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  gap: 12px;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.profileMeta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ghostBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-2);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.ghostBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.ghostDangerBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.ghostDangerBtn:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.ghostDangerBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Empty / loading ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px;
+  gap: 8px;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.emptySubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .page { padding: 20px 16px; }
+  .card { padding: 20px 16px; }
+  .uploadZone { padding: 24px 16px; }
+
+  .profileRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profileActions { align-self: flex-end; }
+}

@@ -186,3 +186,13 @@ export interface JobResumeLinkResponse {
 export interface LinkResumeToJobRequest {
   resumeId: string;
 }
+
+export interface ExperienceProfileResponse {
+  id: string;
+  profileName: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  fileSizeDisplay: string;
+  uploadedAt: string;
+}

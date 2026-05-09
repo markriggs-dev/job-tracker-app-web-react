@@ -12,6 +12,7 @@ import JobDetailPage from './pages/jobs/JobDetailPage';
 import CreateJobPage from './pages/jobs/CreateJobPage';
 import EditJobPage from './pages/jobs/EditJobPage';
 import ResumesPage from './pages/resumes/ResumesPage';
+import ExperiencePage from './pages/experience/ExperiencePage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ const AppRoutes = () => {
       <Route path="/jobs/:id/edit"  element={<ProtectedRoute><EditJobPage /></ProtectedRoute>} />
       <Route path="/jobs/:id"       element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
       <Route path="/resumes"        element={<ProtectedRoute><ResumesPage /></ProtectedRoute>} />
+      <Route path="/experience"     element={<ProtectedRoute><ExperiencePage /></ProtectedRoute>} />
       <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
   );
