@@ -196,3 +196,36 @@ export interface ExperienceProfileResponse {
   fileSizeDisplay: string;
   uploadedAt: string;
 }
+
+export interface AiProfileResponse {
+  id: string;
+  name: string;
+  instructions: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAiProfileRequest {
+  name: string;
+  instructions: string;
+}
+
+export interface UpdateAiProfileRequest {
+  name: string;
+  instructions: string;
+}
+
+export interface GeneratedResumeResponse {
+  id: string;
+  jobRequisitionId: string;
+  experienceProfileId: string;
+  aiProfileId: string;
+  fileName: string;
+  fileSizeDisplay: string;
+  generatedAt: string;
+}
+
+export interface GenerateResumeRequest {
+  experienceProfileId: string;
+  aiProfileId: string;
+}

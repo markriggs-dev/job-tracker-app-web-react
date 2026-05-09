@@ -2,13 +2,15 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Pencil, Plus, UserRound, BookOpen, FileText, Info } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, UserRound, BookOpen, FileText, Info, Cpu } from "lucide-react";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
 import { journalService } from "../../services/journalService";
 import { resumeService } from "../../services/resumeService";
+import { aiService } from "../../services/aiService";
+import { experienceService } from "../../services/experienceService";
 import { JobStatus, ContactRoleType, InteractionType } from "../../types";
-import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
+import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest, GenerateResumeRequest } from "../../types";
 import styles from "./JobDetailPage.module.css";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -39,7 +41,7 @@ const emptyContactForm: CreateAndAddContactRequest = {
   roleType: ContactRoleType.CompanyRecruiter,
 };
 
-type Tab = "overview" | "contacts" | "journal" | "resume";
+type Tab = "overview" | "contacts" | "journal" | "resume" | "ai";
 
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -202,6 +204,54 @@ const JobDetailPage = () => {
     });
   };
 
+  // ── AI / Resume Generation ──
+  const [selectedExperienceId, setSelectedExperienceId] = useState("");
+  const [selectedAiProfileId, setSelectedAiProfileId] = useState("");
+  const [generateError, setGenerateError] = useState("");
+
+  const { data: experienceProfiles = [] } = useQuery({
+    queryKey: ["experience-profiles"],
+    queryFn: experienceService.getAll,
+    enabled: !!id,
+  });
+
+  const { data: aiProfiles = [] } = useQuery({
+    queryKey: ["ai-profiles"],
+    queryFn: aiService.getAllProfiles,
+    enabled: !!id,
+  });
+
+  const { data: generatedResumes = [] } = useQuery({
+    queryKey: ["generated-resumes", id],
+    queryFn: () => aiService.getGeneratedResumes(id!),
+    enabled: !!id,
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: (data: GenerateResumeRequest) => aiService.generateResume(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] });
+      setGenerateError("");
+    },
+    onError: () => setGenerateError("Resume generation failed. Make sure the job has a description and both profiles are selected."),
+  });
+
+  const deleteGeneratedMutation = useMutation({
+    mutationFn: (resumeId: string) => aiService.deleteGeneratedResume(id!, resumeId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] }),
+  });
+
+  const handleDownloadGenerated = (resumeId: string, fileName: string) => {
+    aiService.downloadGeneratedResume(id!, resumeId).then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  };
+
   if (isLoading) return <div className={styles.state}>Loading…</div>;
   if (error || !job) return <div className={styles.state}>Job not found.</div>;
 
@@ -262,6 +312,7 @@ const JobDetailPage = () => {
           { key: "contacts", label: "Contacts", icon: <UserRound size={14} />, count: jobContacts.length },
           { key: "journal",  label: "Journal",  icon: <BookOpen size={14} />, count: journalEntries.length },
           { key: "resume",   label: "Resume",   icon: <FileText size={14} /> },
+          { key: "ai",       label: "AI",       icon: <Cpu size={14} />, count: generatedResumes.length },
         ] as { key: Tab; label: string; icon: React.ReactNode; count?: number }[]).map(t => (
           <button
             key={t.key}
@@ -674,6 +725,92 @@ const JobDetailPage = () => {
             )
           )}
         </div>
+      )}
+      {/* ── AI TAB ── */}
+      {activeTab === "ai" && (
+        <>
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <p className={styles.sectionTitle}>Generate Tailored Resume</p>
+            </div>
+            <div className={styles.addForm}>
+              <div className={styles.formRow}>
+                <select
+                  className={styles.input}
+                  value={selectedExperienceId}
+                  onChange={e => setSelectedExperienceId(e.target.value)}
+                >
+                  <option value="">Select experience profile…</option>
+                  {experienceProfiles.map(p => (
+                    <option key={p.id} value={p.id}>{p.profileName}</option>
+                  ))}
+                </select>
+                <select
+                  className={styles.input}
+                  value={selectedAiProfileId}
+                  onChange={e => setSelectedAiProfileId(e.target.value)}
+                >
+                  <option value="">Select AI profile…</option>
+                  {aiProfiles.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+              {experienceProfiles.length === 0 && (
+                <p className={styles.fieldError}>
+                  No experience profiles found.{" "}
+                  <button className={styles.linkBtn} onClick={() => navigate("/experience")}>Upload one</button> first.
+                </p>
+              )}
+              {aiProfiles.length === 0 && (
+                <p className={styles.fieldError}>
+                  No AI profiles found.{" "}
+                  <button className={styles.linkBtn} onClick={() => navigate("/ai-profiles")}>Create one</button> first.
+                </p>
+              )}
+              {generateError && <p className={styles.fieldError}>{generateError}</p>}
+              <div className={styles.formActions}>
+                <button
+                  className={styles.saveMiniBtn}
+                  disabled={!selectedExperienceId || !selectedAiProfileId || generateMutation.isPending}
+                  onClick={() => generateMutation.mutate({ experienceProfileId: selectedExperienceId, aiProfileId: selectedAiProfileId })}
+                >
+                  {generateMutation.isPending ? "Generating… (this may take 15–30s)" : "Generate Resume"}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <p className={styles.sectionTitle}>Generated Resumes</p>
+            </div>
+            {generatedResumes.length === 0 ? (
+              <div className={styles.emptyState}>
+                <Cpu size={36} color="#CBD5E1" strokeWidth={1.5} />
+                <p className={styles.emptyTitle}>No generated resumes yet</p>
+                <p className={styles.emptySubtitle}>Select an experience profile and AI profile above, then click Generate Resume.</p>
+              </div>
+            ) : (
+              <div className={styles.contactList}>
+                {generatedResumes.map(r => (
+                  <div key={r.id} className={styles.contactRow}>
+                    <div className={styles.contactInfo}>
+                      <span className={styles.contactName}>{r.fileName}</span>
+                      <span className={styles.contactMeta}>
+                        {r.fileSizeDisplay} · {new Date(r.generatedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                    <div className={styles.rowActions}>
+                      <button className={styles.ghostBtn} onClick={() => handleDownloadGenerated(r.id, r.fileName)}>Download</button>
+                      <button className={styles.ghostDangerBtn} onClick={() => deleteGeneratedMutation.mutate(r.id)} disabled={deleteGeneratedMutation.isPending}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
