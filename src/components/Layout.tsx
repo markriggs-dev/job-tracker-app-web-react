@@ -44,7 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <div className={styles.avatar}>{initials}</div>
           <div className={styles.userMeta}>
             <span className={styles.userName}>{displayName}</span>
-            <span className={styles.userEmail}>{user?.email}</span>
+            <span className={styles.userEmail} title={user?.email}>{user?.email}</span>
           </div>
           <button
             className={styles.signOut}
