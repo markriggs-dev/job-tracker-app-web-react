@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
+import { ArrowLeft, Pencil, Plus, UserRound, BookOpen, FileText, Info } from "lucide-react";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
 import { journalService } from "../../services/journalService";
@@ -10,15 +11,15 @@ import { JobStatus, ContactRoleType, InteractionType } from "../../types";
 import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
 import styles from "./JobDetailPage.module.css";
 
-const statusColors: Record<string, string> = {
-  Discovered: "#6c757d",
-  Applied: "#2E75B6",
-  InProgress: "#7030A0",
-  WaitingOnResponse: "#C55A11",
-  InterviewScheduled: "#375623",
-  OfferReceived: "#1F3864",
-  Closed: "#c00000",
-  Withdrawn: "#999",
+const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
+  Discovered:         { color: '#64748B', bg: '#F1F5F9' },
+  Applied:            { color: '#2563EB', bg: '#EFF6FF' },
+  InProgress:         { color: '#7C3AED', bg: '#F5F3FF' },
+  WaitingOnResponse:  { color: '#D97706', bg: '#FFFBEB' },
+  InterviewScheduled: { color: '#059669', bg: '#ECFDF5' },
+  OfferReceived:      { color: '#0D9488', bg: '#F0FDFA' },
+  Closed:             { color: '#DC2626', bg: '#FEF2F2' },
+  Withdrawn:          { color: '#64748B', bg: '#F1F5F9' },
 };
 
 const AGENCY_ROLES = new Set<string>([ContactRoleType.AgencyRecruiter, ContactRoleType.AgencyAccountManager]);
@@ -38,16 +39,16 @@ const emptyContactForm: CreateAndAddContactRequest = {
   roleType: ContactRoleType.CompanyRecruiter,
 };
 
+type Tab = "overview" | "contacts" | "journal" | "resume";
+
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [showAddContact, setShowAddContact] = useState(false);
-  const [contactForm, setContactForm] = useState<CreateAndAddContactRequest>(emptyContactForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<UpdateContactRequest>({ name: "", email: "", linkedInUrl: "", agencyName: "" });
-  const [editRoleType, setEditRoleType] = useState<ContactRoleType>(ContactRoleType.CompanyRecruiter);
 
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+
+  // ── Job ──
   const { data: job, isLoading, error } = useQuery({
     queryKey: ["job", id],
     queryFn: () => jobService.getById(id!),
@@ -69,6 +70,13 @@ const JobDetailPage = () => {
     },
   });
 
+  // ── Contacts ──
+  const [showAddContact, setShowAddContact] = useState(false);
+  const [contactForm, setContactForm] = useState<CreateAndAddContactRequest>(emptyContactForm);
+  const [editingContactId, setEditingContactId] = useState<string | null>(null);
+  const [editContactForm, setEditContactForm] = useState<UpdateContactRequest>({ name: "", email: "", linkedInUrl: "", agencyName: "" });
+  const [editRoleType, setEditRoleType] = useState<ContactRoleType>(ContactRoleType.CompanyRecruiter);
+
   const { data: jobContacts = [] } = useQuery({
     queryKey: ["jobContacts", id],
     queryFn: () => contactService.getContactsForJob(id!),
@@ -85,8 +93,7 @@ const JobDetailPage = () => {
   );
 
   const addContactMutation = useMutation({
-    mutationFn: (data: CreateAndAddContactRequest) =>
-      contactService.createAndAddContactToJob(id!, data),
+    mutationFn: (data: CreateAndAddContactRequest) => contactService.createAndAddContactToJob(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
       setShowAddContact(false);
@@ -95,11 +102,8 @@ const JobDetailPage = () => {
   });
 
   const removeContactMutation = useMutation({
-    mutationFn: (linkId: string) =>
-      contactService.removeContactFromJob(id!, linkId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
-    },
+    mutationFn: (linkId: string) => contactService.removeContactFromJob(id!, linkId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobContacts", id] }),
   });
 
   const updateContactMutation = useMutation({
@@ -110,10 +114,11 @@ const JobDetailPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["jobContacts", id] });
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
-      setEditingId(null);
+      setEditingContactId(null);
     },
   });
 
+  // ── Journal ──
   const emptyJournalForm: CreateJournalEntryRequest = {
     interactionType: InteractionType.Note,
     notes: "",
@@ -136,8 +141,7 @@ const JobDetailPage = () => {
   });
 
   const addJournalMutation = useMutation({
-    mutationFn: (data: CreateJournalEntryRequest) =>
-      journalService.create(id!, data),
+    mutationFn: (data: CreateJournalEntryRequest) => journalService.create(id!, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["journal", id] });
       setShowAddJournal(false);
@@ -156,11 +160,10 @@ const JobDetailPage = () => {
 
   const deleteJournalMutation = useMutation({
     mutationFn: (entryId: string) => journalService.delete(id!, entryId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["journal", id] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["journal", id] }),
   });
 
+  // ── Resume ──
   const [showResumeSelector, setShowResumeSelector] = useState(false);
 
   const { data: allResumes = [] } = useQuery({
@@ -185,9 +188,7 @@ const JobDetailPage = () => {
 
   const unlinkResumeMutation = useMutation({
     mutationFn: () => resumeService.unlinkFromJob(id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobResume", id] }),
   });
 
   const handleDownloadResume = (resumeId: string, fileName: string) => {
@@ -201,96 +202,165 @@ const JobDetailPage = () => {
     });
   };
 
-  if (isLoading) return <div className={styles.message}>Loading...</div>;
-  if (error || !job) return <div className={styles.message}>Job not found.</div>;
+  if (isLoading) return <div className={styles.state}>Loading…</div>;
+  if (error || !job) return <div className={styles.state}>Job not found.</div>;
+
+  const s = STATUS_STYLE[job.status] ?? STATUS_STYLE.Discovered;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => navigate("/")}>
-          ← Back
+    <div className={styles.page}>
+      {/* Page header */}
+      <div className={styles.pageHeader}>
+        <button className={styles.backBtn} onClick={() => navigate("/")}>
+          <ArrowLeft size={14} /> Back
         </button>
-        <button
-          className={styles.editButton}
-          onClick={() => navigate(`/jobs/${id}/edit`)}
-        >
-          Edit
-        </button>
-        <div className={styles.headerInfo}>
-          <h1 className={styles.title}>{job.roleTitle}</h1>
-          <p className={styles.company}>{job.companyName}</p>
+        <div className={styles.jobMeta}>
+          <h1 className={styles.jobTitle}>{job.roleTitle}</h1>
+          <p className={styles.jobCompany}>{job.companyName}</p>
         </div>
-        <span
-          className={styles.statusBadge}
-          style={{ backgroundColor: statusColors[job.status] || "#6c757d" }}
-        >
-          {job.statusDisplay}
-        </span>
+        <div className={styles.headerRight}>
+          <span className={styles.statusBadge} style={{ color: s.color, background: s.bg }}>
+            {job.statusDisplay}
+          </span>
+          <button className={styles.editBtn} onClick={() => navigate(`/jobs/${id}/edit`)}>
+            <Pencil size={13} /> Edit
+          </button>
+        </div>
       </div>
 
-      <div className={styles.content}>
-        {/* Status Update */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Update Status</h2>
-          <div className={styles.statusButtons}>
-            {Object.values(JobStatus).map((s) => (
+      {/* Status selector */}
+      <div className={styles.statusCard}>
+        <p className={styles.statusLabel}>Update Status</p>
+        <div className={styles.statusButtons}>
+          {Object.values(JobStatus).map(val => {
+            const st = STATUS_STYLE[val] ?? STATUS_STYLE.Discovered;
+            const isActive = job.status === val;
+            return (
               <button
-                key={s}
-                className={styles.statusButton}
+                key={val}
+                className={styles.statusBtn}
                 style={{
-                  backgroundColor: job.status === s ? statusColors[s] : "#f0f0f0",
-                  color: job.status === s ? "#fff" : "#333",
+                  background: isActive ? st.bg : 'transparent',
+                  color: isActive ? st.color : 'var(--color-text-muted)',
+                  borderColor: isActive ? st.color : 'var(--color-border)',
+                  fontWeight: isActive ? 600 : 400,
                 }}
-                onClick={() => statusMutation.mutate(s)}
+                onClick={() => statusMutation.mutate(val)}
                 disabled={statusMutation.isPending}
               >
-                {s.replace(/([A-Z])/g, " $1").trim()}
+                {val.replace(/([A-Z])/g, " $1").trim()}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Details */}
-        <div className={styles.card}>
-          <h2 className={styles.sectionTitle}>Details</h2>
-          <div className={styles.detailGrid}>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Date Discovered</span>
-              <span className={styles.detailValue}>{job.dateDiscovered}</span>
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Date Submitted</span>
-              <span className={styles.detailValue}>{job.dateSubmitted || "—"}</span>
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Expiry Date</span>
-              <span className={styles.detailValue}>{job.applicationExpiryDate || "—"}</span>
-            </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Found On</span>
-              <span className={styles.detailValue}>
-                {job.sourceUrl ? (
-                  <a href={job.sourceUrl} target="_blank" rel="noreferrer">View ↗</a>
-                ) : "—"}
+      {/* Tabs */}
+      <div className={styles.tabs}>
+        {([
+          { key: "overview", label: "Overview", icon: <Info size={14} /> },
+          { key: "contacts", label: "Contacts", icon: <UserRound size={14} />, count: jobContacts.length },
+          { key: "journal",  label: "Journal",  icon: <BookOpen size={14} />, count: journalEntries.length },
+          { key: "resume",   label: "Resume",   icon: <FileText size={14} /> },
+        ] as { key: Tab; label: string; icon: React.ReactNode; count?: number }[]).map(t => (
+          <button
+            key={t.key}
+            className={`${styles.tab} ${activeTab === t.key ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab(t.key)}
+          >
+            {t.icon}
+            {t.label}
+            {t.count !== undefined && t.count > 0 && (
+              <span style={{
+                background: activeTab === t.key ? '#EFF6FF' : 'var(--color-bg)',
+                color: activeTab === t.key ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '1px 7px',
+                borderRadius: '10px',
+                marginLeft: '2px',
+              }}>
+                {t.count}
               </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── OVERVIEW TAB ── */}
+      {activeTab === "overview" && (
+        <>
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <p className={styles.sectionTitle}>Details</p>
             </div>
-            <div className={styles.detailItem}>
-              <span className={styles.detailLabel}>Apply At</span>
-              <span className={styles.detailValue}>
-                {job.companyCareerPortalUrl ? (
-                  <a href={job.companyCareerPortalUrl} target="_blank" rel="noreferrer">View ↗</a>
-                ) : "—"}
-              </span>
+            <div className={styles.detailGrid}>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Discovered</span>
+                <span className={styles.detailValue}>{job.dateDiscovered}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Submitted</span>
+                <span className={styles.detailValue}>{job.dateSubmitted || "—"}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Expires</span>
+                <span className={styles.detailValue}>{job.applicationExpiryDate || "—"}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Found On</span>
+                <span className={styles.detailValue}>
+                  {job.sourceUrl ? <a href={job.sourceUrl} target="_blank" rel="noreferrer">View ↗</a> : "—"}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Apply At</span>
+                <span className={styles.detailValue}>
+                  {job.companyCareerPortalUrl ? <a href={job.companyCareerPortalUrl} target="_blank" rel="noreferrer">View ↗</a> : "—"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Contacts */}
+          {job.jobDescription && (
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <p className={styles.sectionTitle}>Job Description</p>
+              </div>
+              <div
+                className={styles.jobDescription}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.jobDescription) }}
+              />
+            </div>
+          )}
+
+          <div className={styles.dangerCard}>
+            <p className={styles.dangerTitle}>Delete Requisition</p>
+            <p className={styles.dangerText}>
+              This action cannot be undone. All associated contacts and journal entries will also be removed.
+            </p>
+            <button
+              className={styles.deleteBtn}
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this job requisition?")) {
+                  deleteMutation.mutate();
+                }
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Deleting…" : "Delete Requisition"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ── CONTACTS TAB ── */}
+      {activeTab === "contacts" && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.sectionTitle}>Contacts</h2>
-            <button className={styles.addButton} onClick={() => setShowAddContact(v => !v)}>
-              {showAddContact ? "Cancel" : "+ Add Contact"}
+            <p className={styles.sectionTitle}>Contacts</p>
+            <button className={styles.addBtn} onClick={() => setShowAddContact(v => !v)}>
+              {showAddContact ? "Cancel" : <><Plus size={13} /> Add Contact</>}
             </button>
           </div>
 
@@ -332,90 +402,68 @@ const JobDetailPage = () => {
                   className={styles.input}
                   placeholder={`${getOrgLabel(contactForm.roleType)} Name`}
                   value={contactForm.agencyName ?? ""}
-                  list="org-name-suggestions"
+                  list="org-suggestions"
                   onChange={e => setContactForm(f => ({ ...f, agencyName: e.target.value }))}
                 />
-                <datalist id="org-name-suggestions">
-                  {orgSuggestions.map(name => <option key={name} value={name} />)}
+                <datalist id="org-suggestions">
+                  {orgSuggestions.map(n => <option key={n} value={n} />)}
                 </datalist>
+              </div>
+              {addContactMutation.isError && <p className={styles.fieldError}>Failed to add contact.</p>}
+              <div className={styles.formActions}>
+                <button className={styles.cancelMiniBtn} onClick={() => setShowAddContact(false)}>Cancel</button>
                 <button
-                  className={styles.saveButton}
+                  className={styles.saveMiniBtn}
                   disabled={!contactForm.name.trim() || addContactMutation.isPending}
                   onClick={() => addContactMutation.mutate(contactForm)}
                 >
-                  {addContactMutation.isPending ? "Saving..." : "Save Contact"}
+                  {addContactMutation.isPending ? "Saving…" : "Save Contact"}
                 </button>
               </div>
-              {addContactMutation.isError && (
-                <p className={styles.fieldError}>Failed to add contact.</p>
-              )}
             </div>
           )}
 
           {jobContacts.length === 0 && !showAddContact ? (
-            <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No contacts added yet.</p>
+            <div className={styles.emptyState}>
+              <UserRound size={36} color="#CBD5E1" strokeWidth={1.5} />
+              <p className={styles.emptyTitle}>No contacts yet</p>
+              <p className={styles.emptySubtitle}>Add recruiters, hiring managers, or other contacts for this role.</p>
+            </div>
           ) : (
             <div className={styles.contactList}>
               {jobContacts.map(c => (
                 <div
                   key={c.id}
-                  className={`${styles.contactRow} ${editingId === c.id ? styles.contactRowEditing : ""}`}
+                  className={`${styles.contactRow} ${editingContactId === c.id ? styles.contactRowEditing : ""}`}
                 >
-                  {editingId === c.id ? (
+                  {editingContactId === c.id ? (
                     <>
                       <div className={styles.formRow}>
-                        <input
-                          className={styles.input}
-                          placeholder="Name *"
-                          value={editForm.name}
-                          onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
-                        />
-                        <select
-                          className={styles.input}
-                          value={editRoleType}
-                          onChange={e => setEditRoleType(e.target.value as ContactRoleType)}
-                        >
+                        <input className={styles.input} placeholder="Name *" value={editContactForm.name} onChange={e => setEditContactForm(f => ({ ...f, name: e.target.value }))} />
+                        <select className={styles.input} value={editRoleType} onChange={e => setEditRoleType(e.target.value as ContactRoleType)}>
                           {Object.values(ContactRoleType).map(r => (
                             <option key={r} value={r}>{r.replace(/([A-Z])/g, " $1").trim()}</option>
                           ))}
                         </select>
                       </div>
                       <div className={styles.formRow}>
-                        <input
-                          className={styles.input}
-                          placeholder="Email"
-                          value={editForm.email ?? ""}
-                          onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                        />
-                        <input
-                          className={styles.input}
-                          placeholder="LinkedIn URL"
-                          value={editForm.linkedInUrl ?? ""}
-                          onChange={e => setEditForm(f => ({ ...f, linkedInUrl: e.target.value }))}
-                        />
+                        <input className={styles.input} placeholder="Email" value={editContactForm.email ?? ""} onChange={e => setEditContactForm(f => ({ ...f, email: e.target.value }))} />
+                        <input className={styles.input} placeholder="LinkedIn URL" value={editContactForm.linkedInUrl ?? ""} onChange={e => setEditContactForm(f => ({ ...f, linkedInUrl: e.target.value }))} />
                       </div>
                       <div className={styles.formRow}>
-                        <input
-                          className={styles.input}
-                          placeholder={`${getOrgLabel(editRoleType)} Name`}
-                          value={editForm.agencyName ?? ""}
-                          list="org-name-suggestions"
-                          onChange={e => setEditForm(f => ({ ...f, agencyName: e.target.value }))}
-                        />
+                        <input className={styles.input} placeholder={`${getOrgLabel(editRoleType)} Name`} value={editContactForm.agencyName ?? ""} list="org-suggestions" onChange={e => setEditContactForm(f => ({ ...f, agencyName: e.target.value }))} />
                       </div>
+                      {updateContactMutation.isError && <p className={styles.fieldError}>Failed to save changes.</p>}
                       <div className={styles.formActions}>
-                        <button className={styles.cancelEditButton} onClick={() => setEditingId(null)}>Cancel</button>
+                        <button className={styles.cancelMiniBtn} onClick={() => setEditingContactId(null)}>Cancel</button>
                         <button
-                          className={styles.saveButton}
-                          disabled={!editForm.name.trim() || updateContactMutation.isPending}
-                          onClick={() => updateContactMutation.mutate({ contactId: c.contactId, linkId: c.id, data: editForm, roleType: editRoleType })}
+                          className={styles.saveMiniBtn}
+                          disabled={!editContactForm.name.trim() || updateContactMutation.isPending}
+                          onClick={() => updateContactMutation.mutate({ contactId: c.contactId, linkId: c.id, data: editContactForm, roleType: editRoleType })}
                         >
-                          {updateContactMutation.isPending ? "Saving..." : "Save"}
+                          {updateContactMutation.isPending ? "Saving…" : "Save"}
                         </button>
                       </div>
-                      {updateContactMutation.isError && (
-                        <p className={styles.fieldError}>Failed to save changes.</p>
-                      )}
                     </>
                   ) : (
                     <>
@@ -423,27 +471,16 @@ const JobDetailPage = () => {
                         <span className={styles.contactName}>{c.contactName}</span>
                         <span className={styles.roleBadge}>{c.roleTypeDisplay}</span>
                         {c.email && <a href={`mailto:${c.email}`} className={styles.contactLink}>{c.email}</a>}
-                        {c.linkedInUrl && <a href={c.linkedInUrl} target="_blank" rel="noreferrer" className={styles.contactLink}>LinkedIn</a>}
+                        {c.linkedInUrl && <a href={c.linkedInUrl} target="_blank" rel="noreferrer" className={styles.contactLink}>LinkedIn ↗</a>}
                         {c.agencyName && <span className={styles.contactMeta}>{getOrgLabel(c.roleType)}: {c.agencyName}</span>}
                       </div>
-                      <div className={styles.contactActions}>
-                        <button
-                          className={styles.editContactButton}
-                          onClick={() => {
-                            setEditingId(c.id);
-                            setEditRoleType(c.roleType as ContactRoleType);
-                            setEditForm({ name: c.contactName, email: c.email, linkedInUrl: c.linkedInUrl, agencyName: c.agencyName });
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className={styles.removeButton}
-                          onClick={() => removeContactMutation.mutate(c.id)}
-                          disabled={removeContactMutation.isPending}
-                        >
-                          Remove
-                        </button>
+                      <div className={styles.rowActions}>
+                        <button className={styles.ghostBtn} onClick={() => {
+                          setEditingContactId(c.id);
+                          setEditRoleType(c.roleType as ContactRoleType);
+                          setEditContactForm({ name: c.contactName, email: c.email, linkedInUrl: c.linkedInUrl, agencyName: c.agencyName });
+                        }}>Edit</button>
+                        <button className={styles.ghostDangerBtn} onClick={() => removeContactMutation.mutate(c.id)} disabled={removeContactMutation.isPending}>Remove</button>
                       </div>
                     </>
                   )}
@@ -452,13 +489,15 @@ const JobDetailPage = () => {
             </div>
           )}
         </div>
+      )}
 
-        {/* Journal */}
+      {/* ── JOURNAL TAB ── */}
+      {activeTab === "journal" && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.sectionTitle}>Journal</h2>
-            <button className={styles.addButton} onClick={() => setShowAddJournal(v => !v)}>
-              {showAddJournal ? "Cancel" : "+ Add Entry"}
+            <p className={styles.sectionTitle}>Activity Journal</p>
+            <button className={styles.addBtn} onClick={() => setShowAddJournal(v => !v)}>
+              {showAddJournal ? "Cancel" : <><Plus size={13} /> Add Entry</>}
             </button>
           </div>
 
@@ -488,29 +527,32 @@ const JobDetailPage = () => {
                 rows={3}
                 onChange={e => setJournalForm(f => ({ ...f, notes: e.target.value }))}
               />
+              {addJournalMutation.isError && <p className={styles.fieldError}>Failed to save entry.</p>}
               <div className={styles.formActions}>
+                <button className={styles.cancelMiniBtn} onClick={() => setShowAddJournal(false)}>Cancel</button>
                 <button
-                  className={styles.saveButton}
+                  className={styles.saveMiniBtn}
                   disabled={addJournalMutation.isPending}
                   onClick={() => addJournalMutation.mutate(journalForm)}
                 >
-                  {addJournalMutation.isPending ? "Saving..." : "Save Entry"}
+                  {addJournalMutation.isPending ? "Saving…" : "Save Entry"}
                 </button>
               </div>
-              {addJournalMutation.isError && (
-                <p className={styles.fieldError}>Failed to save entry.</p>
-              )}
             </div>
           )}
 
           {journalEntries.length === 0 && !showAddJournal ? (
-            <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No journal entries yet.</p>
+            <div className={styles.emptyState}>
+              <BookOpen size={36} color="#CBD5E1" strokeWidth={1.5} />
+              <p className={styles.emptyTitle}>No journal entries yet</p>
+              <p className={styles.emptySubtitle}>Log calls, emails, interviews, and notes as you progress.</p>
+            </div>
           ) : (
             <div className={styles.journalList}>
               {journalEntries.map(entry => (
                 <div key={entry.id} className={styles.journalEntry}>
                   {editingJournalId === entry.id ? (
-                    <div className={styles.addForm}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                       <div className={styles.formRow}>
                         <select
                           className={styles.input}
@@ -535,13 +577,13 @@ const JobDetailPage = () => {
                         onChange={e => setJournalEditForm(f => ({ ...f, notes: e.target.value }))}
                       />
                       <div className={styles.formActions}>
-                        <button className={styles.cancelEditButton} onClick={() => setEditingJournalId(null)}>Cancel</button>
+                        <button className={styles.cancelMiniBtn} onClick={() => setEditingJournalId(null)}>Cancel</button>
                         <button
-                          className={styles.saveButton}
+                          className={styles.saveMiniBtn}
                           disabled={updateJournalMutation.isPending}
                           onClick={() => updateJournalMutation.mutate({ entryId: entry.id, data: journalEditForm })}
                         >
-                          {updateJournalMutation.isPending ? "Saving..." : "Save"}
+                          {updateJournalMutation.isPending ? "Saving…" : "Save"}
                         </button>
                       </div>
                     </div>
@@ -554,27 +596,12 @@ const JobDetailPage = () => {
                             {new Date(entry.entryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                           </span>
                         </div>
-                        <div className={styles.contactActions}>
-                          <button
-                            className={styles.editContactButton}
-                            onClick={() => {
-                              setEditingJournalId(entry.id);
-                              setJournalEditForm({
-                                interactionType: entry.interactionType,
-                                notes: entry.notes,
-                                entryDate: entry.entryDate.split("T")[0],
-                              });
-                            }}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className={styles.removeButton}
-                            onClick={() => deleteJournalMutation.mutate(entry.id)}
-                            disabled={deleteJournalMutation.isPending}
-                          >
-                            Delete
-                          </button>
+                        <div className={styles.rowActions}>
+                          <button className={styles.ghostBtn} onClick={() => {
+                            setEditingJournalId(entry.id);
+                            setJournalEditForm({ interactionType: entry.interactionType, notes: entry.notes, entryDate: entry.entryDate.split("T")[0] });
+                          }}>Edit</button>
+                          <button className={styles.ghostDangerBtn} onClick={() => deleteJournalMutation.mutate(entry.id)} disabled={deleteJournalMutation.isPending}>Delete</button>
                         </div>
                       </div>
                       {entry.notes && <p className={styles.journalNotes}>{entry.notes}</p>}
@@ -585,14 +612,16 @@ const JobDetailPage = () => {
             </div>
           )}
         </div>
+      )}
 
-        {/* Resume */}
+      {/* ── RESUME TAB ── */}
+      {activeTab === "resume" && (
         <div className={styles.card}>
           <div className={styles.cardHeader}>
-            <h2 className={styles.sectionTitle}>Resume Submitted</h2>
+            <p className={styles.sectionTitle}>Resume Submitted</p>
             {!showResumeSelector && (
-              <button className={styles.addButton} onClick={() => setShowResumeSelector(true)}>
-                {jobResume ? "Change" : "+ Link Resume"}
+              <button className={styles.addBtn} onClick={() => setShowResumeSelector(true)}>
+                {jobResume ? "Change" : <><Plus size={13} /> Link Resume</>}
               </button>
             )}
           </div>
@@ -610,76 +639,42 @@ const JobDetailPage = () => {
                   <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
                 ))}
               </select>
-              <div className={styles.formActions}>
-                <button className={styles.cancelEditButton} onClick={() => setShowResumeSelector(false)}>Cancel</button>
-              </div>
               {allResumes.length === 0 && (
-                <p className={styles.fieldError}>No resumes uploaded yet. <button className={styles.linkButton} onClick={() => navigate('/resumes')}>Upload one</button> first.</p>
+                <p className={styles.fieldError}>
+                  No resumes uploaded yet.{" "}
+                  <button className={styles.linkBtn} onClick={() => navigate("/resumes")}>Upload one</button> first.
+                </p>
               )}
+              <div className={styles.formActions}>
+                <button className={styles.cancelMiniBtn} onClick={() => setShowResumeSelector(false)}>Cancel</button>
+              </div>
             </div>
           )}
 
           {jobResume ? (
-            <div className={styles.contactRow}>
-              <div className={styles.contactInfo}>
-                <span className={styles.contactName}>{jobResume.fileName}</span>
-                <span className={styles.contactMeta}>
+            <div className={styles.resumeLinked}>
+              <div className={styles.resumeInfo}>
+                <span className={styles.resumeName}>{jobResume.fileName}</span>
+                <span className={styles.resumeMeta}>
                   {jobResume.fileSizeDisplay} · Linked {new Date(jobResume.linkedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
                 </span>
               </div>
-              <div className={styles.contactActions}>
-                <button
-                  className={styles.editContactButton}
-                  onClick={() => handleDownloadResume(jobResume.resumeId, jobResume.fileName)}
-                >
-                  Download
-                </button>
-                <button
-                  className={styles.removeButton}
-                  onClick={() => unlinkResumeMutation.mutate()}
-                  disabled={unlinkResumeMutation.isPending}
-                >
-                  Remove
-                </button>
+              <div className={styles.rowActions}>
+                <button className={styles.ghostBtn} onClick={() => handleDownloadResume(jobResume.resumeId, jobResume.fileName)}>Download</button>
+                <button className={styles.ghostDangerBtn} onClick={() => unlinkResumeMutation.mutate()} disabled={unlinkResumeMutation.isPending}>Remove</button>
               </div>
             </div>
           ) : (
             !showResumeSelector && (
-              <p style={{ color: "#888", fontSize: "13px", margin: 0 }}>No resume linked to this application yet.</p>
+              <div className={styles.emptyState}>
+                <FileText size={36} color="#CBD5E1" strokeWidth={1.5} />
+                <p className={styles.emptyTitle}>No resume linked</p>
+                <p className={styles.emptySubtitle}>Link a resume to track which version you submitted for this role.</p>
+              </div>
             )
           )}
         </div>
-
-        {/* Job Description */}
-        {job.jobDescription && (
-          <div className={styles.card}>
-            <h2 className={styles.sectionTitle}>Job Description</h2>
-            <div
-              className={styles.jobDescription}
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.jobDescription) }}
-            />
-          </div>
-        )}
-
-        {/* Danger Zone */}
-        <div className={styles.card} style={{ borderColor: "#ffcccc" }}>
-          <h2 className={styles.sectionTitle} style={{ color: "#c00" }}>Delete Requisition</h2>
-          <p className={styles.deleteWarning}>
-            This action cannot be undone. All associated journal entries and contacts will also be removed.
-          </p>
-          <button
-            className={styles.deleteButton}
-            onClick={() => {
-              if (window.confirm("Are you sure you want to delete this job requisition?")) {
-                deleteMutation.mutate();
-              }
-            }}
-            disabled={deleteMutation.isPending}
-          >
-            {deleteMutation.isPending ? "Deleting..." : "Delete Requisition"}
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

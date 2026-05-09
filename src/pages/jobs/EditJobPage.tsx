@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { jobService } from '../../services/jobService';
 import type { UpdateJobRequisitionRequest } from '../../types/index';
@@ -57,16 +58,11 @@ const EditJobPage = () => {
 
   const mutation = useMutation({
     mutationFn: (data: UpdateJobRequisitionRequest) => jobService.update(id!, data),
-    onSuccess: () => {
-      // Navigate to detail page — SignalR jobUpdated event will trigger cache invalidation
-      navigate(`/jobs/${id}`);
-    },
-    onError: () => {
-      setError('Failed to update job requisition. Please try again.');
-    }
+    onSuccess: () => navigate(`/jobs/${id}`),
+    onError: () => setError('Failed to update job requisition. Please try again.'),
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
@@ -90,8 +86,8 @@ const EditJobPage = () => {
 
   const handleSubmit = () => {
     if (!form.companyName.trim()) { setError('Company name is required.'); return; }
-    if (!form.roleTitle.trim()) { setError('Role title is required.'); return; }
-    if (!form.dateDiscovered) { setError('Date discovered is required.'); return; }
+    if (!form.roleTitle.trim())   { setError('Role title is required.');   return; }
+    if (!form.dateDiscovered)     { setError('Date discovered is required.'); return; }
     setError('');
     const jobDescription = editorRef.current?.innerHTML?.trim() || undefined;
     mutation.mutate({
@@ -100,90 +96,94 @@ const EditJobPage = () => {
       companyCareerPortalUrl: form.companyCareerPortalUrl || undefined,
       jobDescription,
       applicationExpiryDate: form.applicationExpiryDate || undefined,
-      dateSubmitted: form.dateSubmitted || undefined
+      dateSubmitted: form.dateSubmitted || undefined,
     });
   };
 
-  if (isLoading) return <div className={styles.container}><p style={{ padding: '48px', textAlign: 'center', color: '#666' }}>Loading...</p></div>;
+  if (isLoading) return <div className={styles.state}>Loading…</div>;
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => navigate(`/jobs/${id}`)}>← Back</button>
-        <h1 className={styles.title}>Edit Job Requisition</h1>
+    <div className={styles.page}>
+      <div className={styles.pageHeader}>
+        <button className={styles.backBtn} onClick={() => navigate(`/jobs/${id}`)}>
+          <ArrowLeft size={14} /> Back
+        </button>
+        <h1 className={styles.pageTitle}>Edit Job Requisition</h1>
       </div>
 
       <div className={styles.card}>
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <div className={styles.error}>{error}</div>}
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label}>Company Name *</label>
-            <input className={styles.input} name="companyName" value={form.companyName} onChange={handleChange} placeholder="e.g. World Wide Technology" />
+        <div className={styles.section}>
+          <p className={styles.sectionTitle}>Position Details</p>
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Company Name<span className={styles.required}>*</span></label>
+              <input className={styles.input} name="companyName" value={form.companyName} onChange={handleChange} placeholder="e.g. Acme Corporation" />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Role Title<span className={styles.required}>*</span></label>
+              <input className={styles.input} name="roleTitle" value={form.roleTitle} onChange={handleChange} placeholder="e.g. Senior Software Engineer" />
+            </div>
           </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Role Title *</label>
-            <input className={styles.input} name="roleTitle" value={form.roleTitle} onChange={handleChange} placeholder="e.g. Senior Engineering Manager" />
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Found On URL</label>
+              <input className={styles.input} name="sourceUrl" value={form.sourceUrl} onChange={handleChange} placeholder="Where you found the posting" />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Apply At URL</label>
+              <input className={styles.input} name="companyCareerPortalUrl" value={form.companyCareerPortalUrl} onChange={handleChange} placeholder="Direct link on company site" />
+            </div>
           </div>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label}>Found On URL</label>
-            <input className={styles.input} name="sourceUrl" value={form.sourceUrl} onChange={handleChange} placeholder="Where you found the posting" />
+        <div className={styles.section}>
+          <p className={styles.sectionTitle}>Timeline</p>
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Date Discovered<span className={styles.required}>*</span></label>
+              <input className={styles.input} type="date" name="dateDiscovered" value={form.dateDiscovered} onChange={handleChange} />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>Date Submitted</label>
+              <input className={styles.input} type="date" name="dateSubmitted" value={form.dateSubmitted} onChange={handleChange} />
+            </div>
           </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Apply At URL</label>
-            <input className={styles.input} name="companyCareerPortalUrl" value={form.companyCareerPortalUrl} onChange={handleChange} placeholder="Direct link on company site" />
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Application Expiry Date</label>
+              <input className={styles.input} type="date" name="applicationExpiryDate" value={form.applicationExpiryDate} onChange={handleChange} />
+            </div>
+            <div className={styles.field} />
           </div>
         </div>
 
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label}>Date Discovered *</label>
-            <input className={styles.input} type="date" name="dateDiscovered" value={form.dateDiscovered} onChange={handleChange} />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Application Expiry Date</label>
-            <input className={styles.input} type="date" name="applicationExpiryDate" value={form.applicationExpiryDate} onChange={handleChange} />
-          </div>
-        </div>
-
-        <div className={styles.row}>
-          <div className={styles.field}>
-            <label className={styles.label}>Date Submitted</label>
-            <input className={styles.input} type="date" name="dateSubmitted" value={form.dateSubmitted} onChange={handleChange} />
-          </div>
-          <div className={styles.field} />
-        </div>
-
-        <div className={styles.fieldFull}>
-          <label className={styles.label}>Job Description</label>
-          <div className={styles.editorWrapper}>
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning
-              onPaste={handleDescriptionPaste}
-              onInput={handleDescriptionInput}
-              className={styles.editor}
-            />
-            {editorEmpty && (
-              <span className={styles.editorPlaceholder} onClick={() => editorRef.current?.focus()}>
-                Paste the full job description here — formatting, bullets, and structure will be preserved.
-              </span>
-            )}
+        <div className={styles.section}>
+          <p className={styles.sectionTitle}>Job Description</p>
+          <div className={styles.fieldFull}>
+            <div className={styles.editorWrapper}>
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                onPaste={handleDescriptionPaste}
+                onInput={handleDescriptionInput}
+                className={styles.editor}
+              />
+              {editorEmpty && (
+                <span className={styles.editorPlaceholder}>
+                  Paste the full job description here — formatting, bullets, and structure will be preserved.
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.cancelButton} onClick={() => navigate(`/jobs/${id}`)}>Cancel</button>
-          <button
-            className={styles.saveButton}
-            onClick={handleSubmit}
-            disabled={mutation.isPending}
-          >
-            {mutation.isPending ? 'Saving...' : 'Save Changes'}
+          <button className={styles.cancelBtn} onClick={() => navigate(`/jobs/${id}`)}>Cancel</button>
+          <button className={styles.saveBtn} onClick={handleSubmit} disabled={mutation.isPending}>
+            {mutation.isPending ? 'Saving…' : 'Save Changes'}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from './hooks/useApi';
 import { useJobsHub } from './hooks/useJobsHub';
+import Layout from './components/Layout';
 import LoginPage from './pages/auth/LoginPage';
 import CallbackPage from './pages/auth/CallbackPage';
 import DashboardPage from './pages/jobs/DashboardPage';
@@ -14,67 +15,43 @@ import ResumesPage from './pages/resumes/ResumesPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 30000
-    }
+    queries: { retry: 1, staleTime: 30000 }
   }
 });
 
-// Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth0();
 
   if (isLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#555' }}>
-        Loading...
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#F1F5F9' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, background: '#2563EB', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14 }}>JT</div>
+          <span style={{ fontSize: 13, color: '#94A3B8', fontFamily: 'Inter, system-ui, sans-serif' }}>Loading…</span>
+        </div>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  return <>{children}</>;
+  return <Layout>{children}</Layout>;
 };
 
-// Inner app with routing — useApi must be inside Auth0Provider
 const AppRoutes = () => {
-  useApi();      // Injects Auth0 token into axios on auth state change
-  useJobsHub();  // Connects SignalR hub, invalidates queries on job events
+  useApi();
+  useJobsHub();
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/callback" element={<CallbackPage />} />
-      <Route path="/" element={
-        <ProtectedRoute>
-          <DashboardPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/jobs/new" element={
-        <ProtectedRoute>
-          <CreateJobPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/jobs/:id/edit" element={
-        <ProtectedRoute>
-          <EditJobPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/jobs/:id" element={
-        <ProtectedRoute>
-          <JobDetailPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/resumes" element={
-        <ProtectedRoute>
-          <ResumesPage />
-        </ProtectedRoute>
-      } />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/login"          element={<LoginPage />} />
+      <Route path="/callback"       element={<CallbackPage />} />
+      <Route path="/"               element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/jobs/new"       element={<ProtectedRoute><CreateJobPage /></ProtectedRoute>} />
+      <Route path="/jobs/:id/edit"  element={<ProtectedRoute><EditJobPage /></ProtectedRoute>} />
+      <Route path="/jobs/:id"       element={<ProtectedRoute><JobDetailPage /></ProtectedRoute>} />
+      <Route path="/resumes"        element={<ProtectedRoute><ResumesPage /></ProtectedRoute>} />
+      <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

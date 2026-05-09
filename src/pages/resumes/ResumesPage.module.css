@@ -1,115 +1,105 @@
-.container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.header {
-  background-color: #1F3864;
-  color: #fff;
-  padding: 16px 32px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.backButton {
-  background-color: transparent;
-  border: 1px solid #ccc;
-  color: #fff;
-  padding: 6px 14px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: bold;
-}
-
-.content {
+.page {
+  padding: 32px 36px;
   max-width: 800px;
-  margin: 32px auto;
-  padding: 0 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
 }
 
+.pageHeader {
+  margin-bottom: 28px;
+}
+
+.pageTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+/* ── Cards ── */
 .card {
-  background-color: #fff;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  border: 1px solid #eee;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
 }
 
 .sectionTitle {
-  font-size: 16px;
-  font-weight: bold;
-  color: #1F3864;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
   margin: 0 0 16px;
 }
 
-/* Upload zone */
+/* ── Upload zone ── */
 .uploadZone {
-  border: 2px dashed #ccc;
-  border-radius: 6px;
-  padding: 32px;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 36px 24px;
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 
 .uploadZone:hover,
 .uploadZoneDragging {
-  border-color: #2E75B6;
-  background-color: #f0f4ff;
+  border-color: var(--color-accent);
+  background: #EFF6FF;
 }
 
 .uploadIcon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  width: 44px;
+  height: 44px;
+  background: #EFF6FF;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
+  color: var(--color-accent);
 }
 
 .uploadLabel {
   font-size: 14px;
-  color: #555;
+  font-weight: 500;
+  color: var(--color-text-2);
   margin: 0 0 4px;
 }
 
 .uploadHint {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-muted);
   margin: 0;
+}
+
+.uploadingText {
+  font-size: 13px;
+  color: var(--color-accent);
+  margin: 10px 0 0;
 }
 
 .fileInput {
   display: none;
 }
 
-.uploadButton {
-  display: inline-block;
-  margin-top: 12px;
-  background-color: #2E75B6;
-  color: #fff;
-  border: none;
-  padding: 8px 24px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-}
-
 .uploadError {
-  color: #c00;
+  color: var(--color-error);
   font-size: 13px;
-  margin: 8px 0 0;
+  background: var(--color-error-bg);
+  border: 1px solid #FECACA;
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  margin-top: 10px;
 }
 
-/* Resume list */
+/* ── Resume list ── */
 .resumeList {
   display: flex;
   flex-direction: column;
@@ -120,24 +110,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  border: 1px solid #eee;
+  padding: 13px 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   gap: 12px;
 }
 
 .resumeInfo {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .resumeName {
-  font-size: 14px;
-  font-weight: bold;
-  color: #222;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -145,7 +135,7 @@
 
 .resumeMeta {
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .resumeActions {
@@ -154,61 +144,84 @@
   flex-shrink: 0;
 }
 
-.downloadButton {
-  background-color: transparent;
-  color: #2E75B6;
-  border: 1px solid #2E75B6;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
+.ghostBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-2);
   font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
   white-space: nowrap;
-  text-decoration: none;
-  display: inline-flex;
+}
+
+.ghostBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.ghostDangerBtn {
+  padding: 5px 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.ghostDangerBtn:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.ghostDangerBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Empty / loading ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  padding: 40px 24px;
+  gap: 8px;
+  text-align: center;
 }
 
-.deleteButton {
-  background-color: transparent;
-  color: #c00;
-  border: 1px solid #c00;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.emptyText {
-  color: #888;
-  font-size: 13px;
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
   margin: 0;
 }
 
+.emptySubtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .header {
-    padding: 12px 16px;
-  }
-
-  .content {
-    margin: 16px auto;
-    padding: 0 16px;
-  }
-
-  .card {
-    padding: 16px;
-  }
-
-  .uploadZone {
-    padding: 20px 16px;
-  }
+  .page { padding: 20px 16px; }
+  .card { padding: 20px 16px; }
 
   .resumeRow {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .resumeActions {
-    align-self: flex-end;
-  }
+  .resumeActions { align-self: flex-end; }
+  .uploadZone { padding: 24px 16px; }
 }
