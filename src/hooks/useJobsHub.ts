@@ -17,7 +17,8 @@ export const useJobsHub = () => {
         accessTokenFactory: () =>
           getAccessTokenSilently({
             authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
-          })
+          }),
+        transport: signalR.HttpTransportType.LongPolling
       })
       .withAutomaticReconnect()
       .configureLogging(signalR.LogLevel.Warning)
