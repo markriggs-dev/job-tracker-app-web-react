@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import DOMPurify from 'dompurify';
 import { jobService } from '../../services/jobService';
-import type { CreateJobRequisitionRequest } from '../../types/index';
 import styles from './CreateJobPage.module.css';
 
 const CreateJobPage = () => {
