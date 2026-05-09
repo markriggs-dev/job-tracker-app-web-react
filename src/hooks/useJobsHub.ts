@@ -18,6 +18,7 @@ export const useJobsHub = () => {
           getAccessTokenSilently({
             authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
           }),
+        // WebSocket frames don't traverse NPM→YARP proxy chain; LongPolling is reliable
         transport: signalR.HttpTransportType.LongPolling
       })
       .withAutomaticReconnect()
