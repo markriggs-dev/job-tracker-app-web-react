@@ -129,7 +129,15 @@
 .searchInput:focus { border-color: var(--color-border-focus); }
 .searchInput::placeholder { color: var(--color-text-muted); }
 
-.statusSelect {
+/* ── Status filter dropdown ── */
+.filterWrap {
+  position: relative;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   padding: 8px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -140,9 +148,97 @@
   outline: none;
   font-family: inherit;
   transition: border-color 0.15s;
+  white-space: nowrap;
+  min-width: 140px;
 }
 
-.statusSelect:focus { border-color: var(--color-border-focus); }
+.filterBtn:hover { border-color: var(--color-border-focus); }
+
+.filterBtnActive {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.filterCount {
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+.filterChevron {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.filterChevronOpen { transform: rotate(180deg); }
+
+.filterMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 210px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  z-index: 100;
+  padding: 6px 0;
+}
+
+.filterItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.filterItem:hover { background: var(--color-bg); }
+
+.filterCheckbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.filterDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.filterItemLabel {
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.filterClear {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 4px;
+}
+
+.filterClear:hover { background: var(--color-bg); }
 
 /* ── States ── */
 .state      { padding: 48px 0; text-align: center; color: var(--color-text-muted); font-size: 14px; }

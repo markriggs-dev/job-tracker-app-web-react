@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Send, CalendarCheck, Award, Plus, Search, Inbox } from 'lucide-react';
+import { Briefcase, Send, CalendarCheck, Award, Plus, Search, Inbox, ChevronDown } from 'lucide-react';
 import { jobService } from '../../services/jobService';
 import type { JobRequisitionListItem } from '../../types/index';
 import { JobStatus } from '../../types/index';
@@ -23,22 +23,30 @@ const SUBMITTED_STATUSES = new Set<JobStatus>([
   JobStatus.InterviewScheduled, JobStatus.OfferReceived,
 ]);
 
+const ALL_STATUSES = Object.values(JobStatus);
+
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [keyword, setKeyword] = useState('');
-  const [statusFilter, setStatusFilter] = useState<JobStatus | ''>('');
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<JobStatus>>(new Set());
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
-  const { data: allJobs = [] } = useQuery({
+  const { data: allJobs = [], isLoading, error } = useQuery({
     queryKey: ['jobs'],
     queryFn: jobService.getAll,
   });
 
-  const { data: displayJobs, isLoading, error } = useQuery({
-    queryKey: keyword || statusFilter ? ['jobs', 'search', keyword, statusFilter] : ['jobs'],
-    queryFn: () => keyword || statusFilter
-      ? jobService.search(keyword || undefined, statusFilter as JobStatus || undefined)
-      : jobService.getAll(),
-  });
+  useEffect(() => {
+    if (!filterOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [filterOpen]);
 
   const stats = useMemo(() => ({
     total:      allJobs.length,
@@ -46,6 +54,38 @@ const DashboardPage = () => {
     interviews: allJobs.filter(j => j.status === JobStatus.InterviewScheduled).length,
     offers:     allJobs.filter(j => j.status === JobStatus.OfferReceived).length,
   }), [allJobs]);
+
+  const displayJobs = useMemo(() => {
+    let jobs = allJobs;
+    if (keyword.trim()) {
+      const k = keyword.toLowerCase();
+      jobs = jobs.filter(j =>
+        j.companyName.toLowerCase().includes(k) ||
+        j.roleTitle.toLowerCase().includes(k)
+      );
+    }
+    if (selectedStatuses.size > 0) {
+      jobs = jobs.filter(j => selectedStatuses.has(j.status as JobStatus));
+    }
+    return jobs;
+  }, [allJobs, keyword, selectedStatuses]);
+
+  const toggleStatus = (status: JobStatus) => {
+    setSelectedStatuses(prev => {
+      const next = new Set(prev);
+      if (next.has(status)) next.delete(status);
+      else next.add(status);
+      return next;
+    });
+  };
+
+  const filterLabel = selectedStatuses.size === 0
+    ? 'All Statuses'
+    : selectedStatuses.size === 1
+    ? [...selectedStatuses][0].replace(/([A-Z])/g, ' $1').trim()
+    : `${selectedStatuses.size} selected`;
+
+  const isFiltered = keyword.trim() || selectedStatuses.size > 0;
 
   return (
     <div className={styles.page}>
@@ -111,36 +151,73 @@ const DashboardPage = () => {
             onChange={e => setKeyword(e.target.value)}
           />
         </div>
-        <select
-          className={styles.statusSelect}
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value as JobStatus | '')}
-        >
-          <option value="">All Statuses</option>
-          {Object.values(JobStatus).map(s => (
-            <option key={s} value={s}>{s.replace(/([A-Z])/g, ' $1').trim()}</option>
-          ))}
-        </select>
+
+        <div className={styles.filterWrap} ref={filterRef}>
+          <button
+            className={`${styles.filterBtn} ${selectedStatuses.size > 0 ? styles.filterBtnActive : ''}`}
+            onClick={() => setFilterOpen(v => !v)}
+          >
+            <span>{filterLabel}</span>
+            {selectedStatuses.size > 0 && (
+              <span className={styles.filterCount}>{selectedStatuses.size}</span>
+            )}
+            <ChevronDown size={13} className={`${styles.filterChevron} ${filterOpen ? styles.filterChevronOpen : ''}`} />
+          </button>
+
+          {filterOpen && (
+            <div className={styles.filterMenu}>
+              {ALL_STATUSES.map(status => {
+                const st = STATUS_STYLE[status];
+                const checked = selectedStatuses.has(status);
+                return (
+                  <label key={status} className={styles.filterItem}>
+                    <input
+                      type="checkbox"
+                      className={styles.filterCheckbox}
+                      checked={checked}
+                      onChange={() => toggleStatus(status)}
+                    />
+                    <span
+                      className={styles.filterDot}
+                      style={{ background: st.color }}
+                    />
+                    <span className={styles.filterItemLabel}>
+                      {status.replace(/([A-Z])/g, ' $1').trim()}
+                    </span>
+                  </label>
+                );
+              })}
+              {selectedStatuses.size > 0 && (
+                <button
+                  className={styles.filterClear}
+                  onClick={() => { setSelectedStatuses(new Set()); setFilterOpen(false); }}
+                >
+                  Clear filter
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {isLoading && <div className={styles.state}>Loading…</div>}
       {error     && <div className={styles.stateError}>Failed to load jobs. Please try again.</div>}
 
-      {!isLoading && !error && displayJobs?.length === 0 && (
+      {!isLoading && !error && displayJobs.length === 0 && (
         <div className={styles.empty}>
           <Inbox size={40} color="#CBD5E1" strokeWidth={1.5} />
           <p className={styles.emptyTitle}>
-            {keyword || statusFilter ? 'No jobs match your filters' : 'No job requisitions yet'}
+            {isFiltered ? 'No jobs match your filters' : 'No job requisitions yet'}
           </p>
           <p className={styles.emptySubtitle}>
-            {keyword || statusFilter
+            {isFiltered
               ? 'Try adjusting your search or status filter.'
               : 'Click "Add Job" to start tracking your first opportunity.'}
           </p>
         </div>
       )}
 
-      {!isLoading && !error && displayJobs && displayJobs.length > 0 && (
+      {!isLoading && !error && displayJobs.length > 0 && (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
