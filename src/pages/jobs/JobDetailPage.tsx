@@ -10,7 +10,7 @@ import { resumeService } from "../../services/resumeService";
 import { aiService } from "../../services/aiService";
 import { experienceService } from "../../services/experienceService";
 import { JobStatus, ContactRoleType, InteractionType } from "../../types";
-import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest, GenerateResumeRequest } from "../../types";
+import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
 import styles from "./JobDetailPage.module.css";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -231,11 +231,6 @@ const JobDetailPage = () => {
     queryKey: ["generated-resumes", id],
     queryFn: () => aiService.getGeneratedResumes(id!),
     enabled: !!id,
-  });
-
-  const generateMutation = useMutation({
-    mutationFn: (data: GenerateResumeRequest) => aiService.generateResume(id!, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] }),
   });
 
   const handleGeneratePrompt = async () => {
