@@ -229,3 +229,13 @@ export interface GenerateResumeRequest {
   experienceProfileId: string;
   aiProfileId: string;
 }
+
+export interface BuildPromptRequest {
+  experienceProfileId: string;
+  aiProfileId: string;
+}
+
+export interface BuildPromptResponse {
+  prompt: string;
+  experienceEmbedded: boolean;
+}
