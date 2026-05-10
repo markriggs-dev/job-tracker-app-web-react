@@ -758,34 +758,6 @@ const JobDetailPage = () => {
       {/* ── AI TAB ── */}
       {activeTab === "ai" && (
         <>
-          {/* API Service Model */}
-          <div className={styles.card}>
-            <div className={styles.aiModelHeader}>
-              <p className={styles.sectionTitle}>API Service Model</p>
-              <span className={styles.comingSoonBadge}>Coming Soon</span>
-            </div>
-            <p className={styles.aiModelDesc}>
-              Direct in-app generation via Anthropic API — resumes are created and stored without leaving the app.
-            </p>
-            <div className={styles.addForm}>
-              <div className={styles.formRow}>
-                <select className={styles.input} value={apiExperienceId} onChange={e => setApiExperienceId(e.target.value)}>
-                  <option value="">Select experience profile…</option>
-                  {experienceProfiles.map(p => <option key={p.id} value={p.id}>{p.profileName}</option>)}
-                </select>
-                <select className={styles.input} value={apiAiProfileId} onChange={e => setApiAiProfileId(e.target.value)}>
-                  <option value="">Select AI profile…</option>
-                  {aiProfiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div className={styles.formActions}>
-                <button className={styles.saveMiniBtn} disabled title="API integration coming soon">
-                  Generate Resume
-                </button>
-              </div>
-            </div>
-          </div>
-
           {/* Claude.AI Model */}
           <div className={styles.card}>
             <div className={styles.aiModelHeader}>
@@ -849,6 +821,34 @@ const JobDetailPage = () => {
                 </ol>
               </div>
             )}
+          </div>
+
+          {/* API Service Model */}
+          <div className={styles.card}>
+            <div className={styles.aiModelHeader}>
+              <p className={styles.sectionTitle}>API Service Model</p>
+              <span className={styles.comingSoonBadge}>Coming Soon</span>
+            </div>
+            <p className={styles.aiModelDesc}>
+              Direct in-app generation via Anthropic API — resumes are created and stored without leaving the app.
+            </p>
+            <div className={styles.addForm}>
+              <div className={styles.formRow}>
+                <select className={styles.input} value={apiExperienceId} onChange={e => setApiExperienceId(e.target.value)}>
+                  <option value="">Select experience profile…</option>
+                  {experienceProfiles.map(p => <option key={p.id} value={p.id}>{p.profileName}</option>)}
+                </select>
+                <select className={styles.input} value={apiAiProfileId} onChange={e => setApiAiProfileId(e.target.value)}>
+                  <option value="">Select AI profile…</option>
+                  {aiProfiles.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className={styles.formActions}>
+                <button className={styles.saveMiniBtn} disabled title="API integration coming soon">
+                  Generate Resume
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Generated Resumes */}
