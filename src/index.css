@@ -26,12 +26,17 @@
   --sidebar-width: 220px;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  overflow-x: hidden;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--color-bg);
   color: var(--color-text);
