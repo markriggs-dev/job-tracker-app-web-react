@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, BriefcaseBusiness, Cpu, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, FileText, BriefcaseBusiness, Cpu, MessageSquare, LogOut, Menu, X } from 'lucide-react';
 import styles from './Layout.module.css';
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { path: '/resumes',     label: 'Resumes',     Icon: FileText },
   { path: '/experience',  label: 'Experience',  Icon: BriefcaseBusiness },
   { path: '/ai-profiles', label: 'AI Profiles', Icon: Cpu },
+  { path: '/feedback',    label: 'Feedback',    Icon: MessageSquare },
 ];
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
