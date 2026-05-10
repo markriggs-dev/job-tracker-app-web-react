@@ -5,6 +5,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from './hooks/useApi';
 import { useJobsHub } from './hooks/useJobsHub';
 import Layout from './components/Layout';
+import Analytics from './components/Analytics';
 import LoginPage from './pages/auth/LoginPage';
 import CallbackPage from './pages/auth/CallbackPage';
 import DashboardPage from './pages/jobs/DashboardPage';
@@ -45,7 +46,9 @@ const AppRoutes = () => {
   useJobsHub();
 
   return (
-    <Routes>
+    <>
+      <Analytics />
+      <Routes>
       <Route path="/login"          element={<LoginPage />} />
       <Route path="/callback"       element={<CallbackPage />} />
       <Route path="/"               element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
@@ -57,6 +60,7 @@ const AppRoutes = () => {
       <Route path="/ai-profiles"    element={<ProtectedRoute><AiProfilesPage /></ProtectedRoute>} />
       <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
+    </>
   );
 };
 
