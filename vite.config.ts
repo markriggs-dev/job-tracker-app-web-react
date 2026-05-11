@@ -4,9 +4,4 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: process.env.GITHUB_PAGES === 'true' ? '/job-tracker-app-web-react/' : '/',
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-  },
 })
