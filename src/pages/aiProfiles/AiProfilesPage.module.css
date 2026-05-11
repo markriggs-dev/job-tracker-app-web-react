@@ -214,9 +214,7 @@
 }
 
 .profileInstructions {
-  width: 100%;
-  min-height: 120px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   font-size: 13px;
@@ -224,11 +222,9 @@
   line-height: 1.55;
   color: var(--color-text-2);
   background: var(--color-surface);
-  resize: none;
-  cursor: default;
-  outline: none;
-  box-sizing: border-box;
-  margin-bottom: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 0 14px;
 }
 
 .profileActions {

@@ -172,11 +172,7 @@ const AiProfilesPage = () => {
                         Updated {new Date(selectedProfile.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                    <textarea
-                      readOnly
-                      className={styles.profileInstructions}
-                      value={selectedProfile.instructions}
-                    />
+                    <p className={styles.profileInstructions}>{selectedProfile.instructions}</p>
                     {confirmDelete ? (
                       <div className={styles.deleteConfirm}>
                         <span className={styles.confirmText}>Delete "{selectedProfile.name}"?</span>
