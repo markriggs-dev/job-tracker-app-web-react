@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
-import { ArrowLeft, Pencil, Plus, UserRound, BookOpen, FileText, Info, Cpu } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, UserRound, BookOpen, FileText, Info, Cpu, X } from "lucide-react";
 import { jobService } from "../../services/jobService";
 import { contactService } from "../../services/contactService";
 import { journalService } from "../../services/journalService";
@@ -23,6 +23,17 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
   Closed:             { color: '#DC2626', bg: '#FEF2F2' },
   Withdrawn:          { color: '#64748B', bg: '#F1F5F9' },
 };
+
+const STATUS_GUIDE = [
+  { status: 'Discovered',          desc: 'Found this opportunity — evaluating whether to pursue it.' },
+  { status: 'Applied',             desc: 'Resume submitted to a recruiter or job portal.' },
+  { status: 'Waiting On Response', desc: 'Submission complete — awaiting feedback from the recruiter or company.' },
+  { status: 'In Progress',         desc: 'Actively engaged with the hiring team; interviews or assessments underway.' },
+  { status: 'Interview Scheduled', desc: 'Interview confirmed with the company.' },
+  { status: 'Offer Received',      desc: 'Formal offer received from the company.' },
+  { status: 'Closed',              desc: 'This opportunity is no longer active or available.' },
+  { status: 'Withdrawn',           desc: 'You have removed yourself from consideration.' },
+];
 
 const AGENCY_ROLES = new Set<string>([ContactRoleType.AgencyRecruiter, ContactRoleType.AgencyAccountManager]);
 const COMPANY_ROLES = new Set<string>([ContactRoleType.CompanyRecruiter, ContactRoleType.HiringManager]);
@@ -49,6 +60,7 @@ const JobDetailPage = () => {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [showStatusGuide, setShowStatusGuide] = useState(false);
 
   // ── Job ──
   const { data: job, isLoading, error } = useQuery({
@@ -317,7 +329,13 @@ const JobDetailPage = () => {
 
       {/* Status selector */}
       <div className={styles.statusCard}>
-        <p className={styles.statusLabel}>Update Status</p>
+        <div className={styles.statusCardHeader}>
+          <p className={styles.statusLabel}>Update Status</p>
+          <button className={styles.statusGuideBtn} onClick={() => setShowStatusGuide(true)}>
+            <Info size={13} />
+            Status Guide
+          </button>
+        </div>
         <div className={styles.statusButtons}>
           {Object.values(JobStatus).map(val => {
             const st = STATUS_STYLE[val] ?? STATUS_STYLE.Discovered;
@@ -910,6 +928,28 @@ const JobDetailPage = () => {
             )}
           </div>
         </>
+      )}
+
+      {/* Status Guide Modal / Bottom Sheet */}
+      {showStatusGuide && (
+        <div className={styles.modalOverlay} onClick={() => setShowStatusGuide(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <p className={styles.modalTitle}>Status Guide</p>
+              <button className={styles.modalClose} onClick={() => setShowStatusGuide(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.statusGuideTable}>
+              {STATUS_GUIDE.map(({ status, desc }) => (
+                <div key={status} className={styles.statusGuideRow}>
+                  <span className={styles.statusGuideName}>{status}</span>
+                  <span className={styles.statusGuideDesc}>{desc}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
