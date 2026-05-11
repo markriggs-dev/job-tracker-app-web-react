@@ -13,9 +13,10 @@ export const isSubmissionImplied = (status: JobStatus): boolean =>
 
 export const formatJobDate = (dateString: string | undefined): string => {
   if (!dateString) return '—';
-  // Date-only strings (no T) are UTC midnight — append local time marker to prevent day rollback
-  const normalized = dateString.includes('T') ? dateString : dateString + 'T00:00:00';
-  return new Date(normalized).toLocaleDateString('en-US', {
+  // Always parse just the date portion as local midnight — avoids UTC offset rollback
+  // regardless of whether the string is date-only or a full DateTimeOffset from the API
+  const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
   });
 };
