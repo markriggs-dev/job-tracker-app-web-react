@@ -29,6 +29,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Test
+        run: npm run test:run
+
       - run: npm run build
         env:
           GITHUB_PAGES: true
