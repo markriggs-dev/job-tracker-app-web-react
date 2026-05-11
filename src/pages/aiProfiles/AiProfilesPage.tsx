@@ -12,20 +12,25 @@ const AiProfilesPage = () => {
 
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState<CreateAiProfileRequest>(emptyForm);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string>('');
+  const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<UpdateAiProfileRequest>({ name: '', instructions: '' });
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: profiles = [], isLoading } = useQuery({
     queryKey: ['ai-profiles'],
     queryFn: aiService.getAllProfiles,
   });
 
+  const selectedProfile = profiles.find(p => p.id === selectedId) ?? null;
+
   const createMutation = useMutation({
     mutationFn: (data: CreateAiProfileRequest) => aiService.createProfile(data),
-    onSuccess: () => {
+    onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ['ai-profiles'] });
       setShowAdd(false);
       setAddForm(emptyForm);
+      setSelectedId(created.id);
     },
   });
 
@@ -34,14 +39,31 @@ const AiProfilesPage = () => {
       aiService.updateProfile(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ai-profiles'] });
-      setEditingId(null);
+      setIsEditing(false);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => aiService.deleteProfile(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ai-profiles'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-profiles'] });
+      setSelectedId('');
+      setConfirmDelete(false);
+    },
   });
+
+  const handleSelect = (id: string) => {
+    setSelectedId(id);
+    setIsEditing(false);
+    setConfirmDelete(false);
+  };
+
+  const handleEditOpen = () => {
+    if (!selectedProfile) return;
+    setEditForm({ name: selectedProfile.name, instructions: selectedProfile.instructions });
+    setIsEditing(true);
+    setConfirmDelete(false);
+  };
 
   return (
     <div className={styles.page}>
@@ -102,10 +124,21 @@ const AiProfilesPage = () => {
         )}
 
         {profiles.length > 0 && (
-          <div className={styles.profileList}>
-            {profiles.map(p => (
-              <div key={p.id} className={styles.profileCard}>
-                {editingId === p.id ? (
+          <>
+            <select
+              className={styles.select}
+              value={selectedId}
+              onChange={e => handleSelect(e.target.value)}
+            >
+              <option value="">Select a profile…</option>
+              {profiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            {selectedProfile && (
+              <div className={styles.profilePanel}>
+                {isEditing ? (
                   <>
                     <input
                       className={styles.input}
@@ -121,11 +154,11 @@ const AiProfilesPage = () => {
                     />
                     <div style={{ height: 10 }} />
                     <div className={styles.formActions}>
-                      <button className={styles.cancelMiniBtn} onClick={() => setEditingId(null)}>Cancel</button>
+                      <button className={styles.cancelMiniBtn} onClick={() => setIsEditing(false)}>Cancel</button>
                       <button
                         className={styles.saveMiniBtn}
                         disabled={!editForm.name.trim() || !editForm.instructions.trim() || updateMutation.isPending}
-                        onClick={() => updateMutation.mutate({ id: p.id, data: editForm })}
+                        onClick={() => updateMutation.mutate({ id: selectedProfile.id, data: editForm })}
                       >
                         {updateMutation.isPending ? 'Saving…' : 'Save'}
                       </button>
@@ -134,32 +167,35 @@ const AiProfilesPage = () => {
                 ) : (
                   <>
                     <div className={styles.profileCardHeader}>
-                      <span className={styles.profileName}>{p.name}</span>
+                      <span className={styles.profileName}>{selectedProfile.name}</span>
                       <span className={styles.profileDate}>
-                        {new Date(p.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                        Updated {new Date(selectedProfile.updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </span>
                     </div>
-                    <p className={styles.profileInstructions}>{p.instructions}</p>
-                    <div className={styles.profileActions}>
-                      <button
-                        className={styles.ghostBtn}
-                        onClick={() => { setEditingId(p.id); setEditForm({ name: p.name, instructions: p.instructions }); }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className={styles.ghostDangerBtn}
-                        onClick={() => { if (window.confirm(`Delete "${p.name}"?`)) deleteMutation.mutate(p.id); }}
-                        disabled={deleteMutation.isPending}
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <p className={styles.profileInstructions}>{selectedProfile.instructions}</p>
+                    {confirmDelete ? (
+                      <div className={styles.deleteConfirm}>
+                        <span className={styles.confirmText}>Delete "{selectedProfile.name}"?</span>
+                        <button className={styles.cancelMiniBtn} onClick={() => setConfirmDelete(false)}>Cancel</button>
+                        <button
+                          className={styles.deleteMiniBtn}
+                          disabled={deleteMutation.isPending}
+                          onClick={() => deleteMutation.mutate(selectedProfile.id)}
+                        >
+                          {deleteMutation.isPending ? 'Deleting…' : 'Yes, delete'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className={styles.profileActions}>
+                        <button className={styles.ghostBtn} onClick={handleEditOpen}>Edit</button>
+                        <button className={styles.ghostDangerBtn} onClick={() => setConfirmDelete(true)}>Delete</button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
