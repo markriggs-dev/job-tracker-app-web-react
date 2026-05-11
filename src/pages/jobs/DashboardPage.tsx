@@ -5,6 +5,7 @@ import { Briefcase, Send, CalendarCheck, Award, Plus, Search, Inbox, ChevronDown
 import { jobService } from '../../services/jobService';
 import type { JobRequisitionListItem } from '../../types/index';
 import { JobStatus } from '../../types/index';
+import { SUBMITTED_STATUSES } from '../../utils/jobUtils';
 import styles from './DashboardPage.module.css';
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -17,11 +18,6 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
   Closed:             { color: '#DC2626', bg: '#FEF2F2' },
   Withdrawn:          { color: '#64748B', bg: '#F1F5F9' },
 };
-
-const SUBMITTED_STATUSES = new Set<JobStatus>([
-  JobStatus.Applied, JobStatus.InProgress, JobStatus.WaitingOnResponse,
-  JobStatus.InterviewScheduled, JobStatus.OfferReceived,
-]);
 
 const ALL_STATUSES = Object.values(JobStatus);
 
