@@ -411,6 +411,53 @@
   font-family: inherit;
 }
 
+.orDivider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.orDivider::before,
+.orDivider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.uploadInlineBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-2);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.uploadInlineBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.uploadInlineBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fileInputHidden {
+  display: none;
+}
+
 /* ── Contacts ── */
 .contactList {
   display: flex;
