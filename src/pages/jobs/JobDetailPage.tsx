@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
@@ -167,6 +167,7 @@ const JobDetailPage = () => {
 
   // ── Resume ──
   const [showResumeSelector, setShowResumeSelector] = useState(false);
+  const resumeFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: allResumes = [] } = useQuery({
     queryKey: ["resumes"],
@@ -183,6 +184,18 @@ const JobDetailPage = () => {
   const linkResumeMutation = useMutation({
     mutationFn: (resumeId: string) => resumeService.linkToJob(id!, { resumeId }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
+      setShowResumeSelector(false);
+    },
+  });
+
+  const uploadAndLinkMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const uploaded = await resumeService.upload(file);
+      await resumeService.linkToJob(id!, { resumeId: uploaded.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["resumes"] });
       queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
       setShowResumeSelector(false);
     },
@@ -703,22 +716,42 @@ const JobDetailPage = () => {
 
           {showResumeSelector && (
             <div className={styles.addForm}>
-              <select
-                className={styles.input}
-                defaultValue=""
-                onChange={e => { if (e.target.value) linkResumeMutation.mutate(e.target.value); }}
-                disabled={linkResumeMutation.isPending}
+              {allResumes.length > 0 && (
+                <select
+                  className={styles.input}
+                  defaultValue=""
+                  onChange={e => { if (e.target.value) linkResumeMutation.mutate(e.target.value); }}
+                  disabled={linkResumeMutation.isPending || uploadAndLinkMutation.isPending}
+                >
+                  <option value="" disabled>Select an existing resume…</option>
+                  {allResumes.map(r => (
+                    <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
+                  ))}
+                </select>
+              )}
+              <div className={styles.orDivider}>
+                {allResumes.length > 0 ? 'or upload a new one' : 'Upload a resume'}
+              </div>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className={styles.fileInputHidden}
+                ref={resumeFileInputRef}
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) uploadAndLinkMutation.mutate(file);
+                }}
+              />
+              <button
+                className={styles.uploadInlineBtn}
+                disabled={uploadAndLinkMutation.isPending || linkResumeMutation.isPending}
+                onClick={() => resumeFileInputRef.current?.click()}
               >
-                <option value="" disabled>Select a resume…</option>
-                {allResumes.map(r => (
-                  <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
-                ))}
-              </select>
-              {allResumes.length === 0 && (
-                <p className={styles.fieldError}>
-                  No resumes uploaded yet.{" "}
-                  <button className={styles.linkBtn} onClick={() => navigate("/resumes")}>Upload one</button> first.
-                </p>
+                <FileText size={14} />
+                {uploadAndLinkMutation.isPending ? 'Uploading…' : 'Choose file (PDF, DOC, DOCX)'}
+              </button>
+              {uploadAndLinkMutation.isError && (
+                <p className={styles.fieldError}>Upload failed. Please try again.</p>
               )}
               <div className={styles.formActions}>
                 <button className={styles.cancelMiniBtn} onClick={() => setShowResumeSelector(false)}>Cancel</button>
