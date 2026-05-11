@@ -22,7 +22,7 @@
   margin: 0;
 }
 
-/* ── Cards ── */
+/* ── Card ── */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -46,7 +46,7 @@
   margin: 0;
 }
 
-/* ── Form ── */
+/* ── Add form ── */
 .addForm {
   display: flex;
   flex-direction: column;
@@ -151,14 +151,40 @@
 
 .saveMiniBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ── Profile list ── */
-.profileList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.deleteMiniBtn {
+  padding: 6px 14px;
+  background: var(--color-error);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
 }
 
-.profileCard {
+.deleteMiniBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Profile selector dropdown ── */
+.select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  margin-bottom: 16px;
+}
+
+.select:focus { border-color: var(--color-border-focus); }
+
+/* ── Selected profile panel ── */
+.profilePanel {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -170,7 +196,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .profileName {
@@ -191,7 +217,7 @@
   font-size: 13px;
   color: var(--color-text-2);
   line-height: 1.55;
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -237,7 +263,19 @@
   color: var(--color-error);
 }
 
-.ghostDangerBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* ── Inline delete confirmation ── */
+.deleteConfirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.confirmText {
+  font-size: 12.5px;
+  color: var(--color-text-2);
+  flex: 1;
+}
 
 /* ── Empty / loading ── */
 .emptyState {
@@ -273,4 +311,5 @@
 @media (max-width: 768px) {
   .page { padding: 20px 16px; }
   .card { padding: 20px 16px; }
+  .deleteConfirm { flex-direction: column; align-items: flex-start; }
 }
