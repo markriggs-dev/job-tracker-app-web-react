@@ -23,19 +23,19 @@ const ALL_STATUSES = Object.values(JobStatus);
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const [keyword, setKeyword] = useState(() => sessionStorage.getItem('dashboard_keyword') ?? '');
+  const [keyword, setKeyword] = useState(() => localStorage.getItem('dashboard_keyword') ?? '');
   const [selectedStatuses, setSelectedStatuses] = useState<Set<JobStatus>>(() => {
     try {
-      const saved = sessionStorage.getItem('dashboard_statuses');
+      const saved = localStorage.getItem('dashboard_statuses');
       return saved ? new Set(JSON.parse(saved) as JobStatus[]) : new Set();
     } catch { return new Set(); }
   });
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { sessionStorage.setItem('dashboard_keyword', keyword); }, [keyword]);
+  useEffect(() => { localStorage.setItem('dashboard_keyword', keyword); }, [keyword]);
   useEffect(() => {
-    sessionStorage.setItem('dashboard_statuses', JSON.stringify([...selectedStatuses]));
+    localStorage.setItem('dashboard_statuses', JSON.stringify([...selectedStatuses]));
   }, [selectedStatuses]);
 
   const { data: allJobs = [], isLoading, error } = useQuery({
