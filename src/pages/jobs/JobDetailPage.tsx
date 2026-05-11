@@ -11,6 +11,7 @@ import { aiService } from "../../services/aiService";
 import { experienceService } from "../../services/experienceService";
 import { JobStatus, ContactRoleType, InteractionType } from "../../types";
 import type { CreateAndAddContactRequest, UpdateContactRequest, CreateJournalEntryRequest, UpdateJournalEntryRequest } from "../../types";
+import { formatJobDate } from "../../utils/jobUtils";
 import styles from "./JobDetailPage.module.css";
 
 const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
@@ -699,7 +700,7 @@ const JobDetailPage = () => {
                         <div className={styles.journalEntryMeta}>
                           <span className={styles.journalTypeBadge}>{entry.interactionTypeDisplay}</span>
                           <span className={styles.journalDate}>
-                            {new Date(entry.entryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                            {formatJobDate(entry.entryDate)}
                           </span>
                         </div>
                         <div className={styles.rowActions}>

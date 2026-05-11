@@ -43,9 +43,17 @@ describe('formatJobDate', () => {
     expect(formatJobDate(undefined)).toBe('—');
   });
 
-  it('formats a valid ISO date string into a readable date', () => {
+  it('formats a full ISO datetime string', () => {
     const result = formatJobDate('2026-05-10T00:00:00Z');
     expect(result).toMatch(/May/);
     expect(result).toMatch(/2026/);
+  });
+
+  it('formats a date-only string without rolling back a day due to UTC offset', () => {
+    const result = formatJobDate('2026-05-05');
+    expect(result).toMatch(/May/);
+    expect(result).toMatch(/5/);
+    expect(result).toMatch(/2026/);
+    expect(result).not.toMatch(/May 4/);
   });
 });
