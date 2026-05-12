@@ -725,6 +725,48 @@
   white-space: pre-wrap;
 }
 
+/* ── Application Documents ── */
+.documentSlot {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.documentSlot:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.documentSlot:first-child {
+  padding-top: 8px;
+}
+
+.documentSlotHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.documentSlotLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.documentSlotEmpty {
+  padding: 12px 16px;
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.documentSlotEmptyText {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
 /* ── Resume ── */
 .resumeLinked {
   display: flex;
