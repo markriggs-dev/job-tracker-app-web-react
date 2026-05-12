@@ -53,7 +53,7 @@ const emptyContactForm: CreateAndAddContactRequest = {
   roleType: ContactRoleType.CompanyRecruiter,
 };
 
-type Tab = "overview" | "contacts" | "journal" | "resume" | "ai";
+type Tab = "overview" | "contacts" | "journal" | "documents" | "ai";
 
 const JobDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -178,9 +178,10 @@ const JobDetailPage = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["journal", id] }),
   });
 
-  // ── Resume ──
-  const [showResumeSelector, setShowResumeSelector] = useState(false);
+  // ── Application Documents ──
+  const [showSelectorFor, setShowSelectorFor] = useState<'Resume' | 'CoverLetter' | null>(null);
   const resumeFileInputRef = useRef<HTMLInputElement | null>(null);
+  const coverLetterFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { data: allResumes = [] } = useQuery({
     queryKey: ["resumes"],
@@ -188,38 +189,39 @@ const JobDetailPage = () => {
     enabled: !!id,
   });
 
-  const { data: jobResume = null } = useQuery({
-    queryKey: ["jobResume", id],
-    queryFn: () => resumeService.getJobResume(id!),
+  const { data: jobDocuments = { resume: null, coverLetter: null } } = useQuery({
+    queryKey: ["jobDocuments", id],
+    queryFn: () => resumeService.getJobDocuments(id!),
     enabled: !!id,
   });
 
-  const linkResumeMutation = useMutation({
-    mutationFn: (resumeId: string) => resumeService.linkToJob(id!, { resumeId }),
+  const linkDocumentMutation = useMutation({
+    mutationFn: ({ resumeId, documentType }: { resumeId: string; documentType: 'Resume' | 'CoverLetter' }) =>
+      resumeService.linkDocumentToJob(id!, { resumeId, documentType }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
-      setShowResumeSelector(false);
+      queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] });
+      setShowSelectorFor(null);
     },
   });
 
   const uploadAndLinkMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file, documentType }: { file: File; documentType: 'Resume' | 'CoverLetter' }) => {
       const uploaded = await resumeService.upload(file);
-      await resumeService.linkToJob(id!, { resumeId: uploaded.id });
+      await resumeService.linkDocumentToJob(id!, { resumeId: uploaded.id, documentType });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resumes"] });
-      queryClient.invalidateQueries({ queryKey: ["jobResume", id] });
-      setShowResumeSelector(false);
+      queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] });
+      setShowSelectorFor(null);
     },
   });
 
-  const unlinkResumeMutation = useMutation({
-    mutationFn: () => resumeService.unlinkFromJob(id!),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobResume", id] }),
+  const unlinkDocumentMutation = useMutation({
+    mutationFn: (documentType: 'Resume' | 'CoverLetter') => resumeService.unlinkDocumentFromJob(id!, documentType),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] }),
   });
 
-  const handleDownloadResume = (resumeId: string, fileName: string) => {
+  const handleDownloadDocument = (resumeId: string, fileName: string) => {
     resumeService.downloadFile(resumeId).then(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -367,7 +369,7 @@ const JobDetailPage = () => {
           { key: "overview", label: "Overview", icon: <Info size={14} /> },
           { key: "contacts", label: "Contacts", icon: <UserRound size={14} />, count: jobContacts.length },
           { key: "journal",  label: "Journal",  icon: <BookOpen size={14} />, count: journalEntries.length },
-          { key: "resume",   label: "Resume",   icon: <FileText size={14} /> },
+          { key: "documents", label: "Documents", icon: <FileText size={14} /> },
           { key: "ai",       label: "AI",       icon: <Cpu size={14} />, count: generatedResumes.length },
         ] as { key: Tab; label: string; icon: React.ReactNode; count?: number }[]).map(t => (
           <button
@@ -721,85 +723,97 @@ const JobDetailPage = () => {
         </div>
       )}
 
-      {/* ── RESUME TAB ── */}
-      {activeTab === "resume" && (
+      {/* ── DOCUMENTS TAB ── */}
+      {activeTab === "documents" && (
         <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <p className={styles.sectionTitle}>Resume Submitted</p>
-            {!showResumeSelector && (
-              <button className={styles.addBtn} onClick={() => setShowResumeSelector(true)}>
-                {jobResume ? "Change" : <><Plus size={13} /> Link Resume</>}
-              </button>
-            )}
-          </div>
+          <p className={styles.sectionTitle}>Application Documents</p>
 
-          {showResumeSelector && (
-            <div className={styles.addForm}>
-              {allResumes.length > 0 && (
-                <select
-                  className={styles.input}
-                  defaultValue=""
-                  onChange={e => { if (e.target.value) linkResumeMutation.mutate(e.target.value); }}
-                  disabled={linkResumeMutation.isPending || uploadAndLinkMutation.isPending}
-                >
-                  <option value="" disabled>Select an existing resume…</option>
-                  {allResumes.map(r => (
-                    <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
-                  ))}
-                </select>
-              )}
-              <div className={styles.orDivider}>
-                {allResumes.length > 0 ? 'or upload a new one' : 'Upload a resume'}
-              </div>
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                className={styles.fileInputHidden}
-                ref={resumeFileInputRef}
-                onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) uploadAndLinkMutation.mutate(file);
-                }}
-              />
-              <button
-                className={styles.uploadInlineBtn}
-                disabled={uploadAndLinkMutation.isPending || linkResumeMutation.isPending}
-                onClick={() => resumeFileInputRef.current?.click()}
-              >
-                <FileText size={14} />
-                {uploadAndLinkMutation.isPending ? 'Uploading…' : 'Choose file (PDF, DOC, DOCX)'}
-              </button>
-              {uploadAndLinkMutation.isError && (
-                <p className={styles.fieldError}>Upload failed. Please try again.</p>
-              )}
-              <div className={styles.formActions}>
-                <button className={styles.cancelMiniBtn} onClick={() => setShowResumeSelector(false)}>Cancel</button>
-              </div>
-            </div>
-          )}
+          {(["Resume", "CoverLetter"] as const).map(docType => {
+            const label = docType === "Resume" ? "Resume" : "Cover Letter";
+            const linked = docType === "Resume" ? jobDocuments.resume : jobDocuments.coverLetter;
+            const fileInputRef = docType === "Resume" ? resumeFileInputRef : coverLetterFileInputRef;
+            const isShowingSelector = showSelectorFor === docType;
+            const isBusy = linkDocumentMutation.isPending || uploadAndLinkMutation.isPending;
 
-          {jobResume ? (
-            <div className={styles.resumeLinked}>
-              <div className={styles.resumeInfo}>
-                <span className={styles.resumeName}>{jobResume.fileName}</span>
-                <span className={styles.resumeMeta}>
-                  {jobResume.fileSizeDisplay} · Linked {new Date(jobResume.linkedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                </span>
+            return (
+              <div key={docType} className={styles.documentSlot}>
+                <div className={styles.documentSlotHeader}>
+                  <span className={styles.documentSlotLabel}>{label}</span>
+                  {!isShowingSelector && (
+                    <button className={styles.addBtn} onClick={() => setShowSelectorFor(docType)}>
+                      {linked ? "Change" : <><Plus size={13} /> Link {label}</>}
+                    </button>
+                  )}
+                </div>
+
+                {isShowingSelector && (
+                  <div className={styles.addForm}>
+                    {allResumes.length > 0 && (
+                      <select
+                        className={styles.input}
+                        defaultValue=""
+                        onChange={e => { if (e.target.value) linkDocumentMutation.mutate({ resumeId: e.target.value, documentType: docType }); }}
+                        disabled={isBusy}
+                      >
+                        <option value="" disabled>Select an existing file…</option>
+                        {allResumes.map(r => (
+                          <option key={r.id} value={r.id}>{r.fileName} ({r.fileSizeDisplay})</option>
+                        ))}
+                      </select>
+                    )}
+                    <div className={styles.orDivider}>
+                      {allResumes.length > 0 ? 'or upload a new one' : `Upload a ${label.toLowerCase()}`}
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className={styles.fileInputHidden}
+                      ref={fileInputRef}
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) uploadAndLinkMutation.mutate({ file, documentType: docType });
+                      }}
+                    />
+                    <button
+                      className={styles.uploadInlineBtn}
+                      disabled={isBusy}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <FileText size={14} />
+                      {uploadAndLinkMutation.isPending ? 'Uploading…' : 'Choose file (PDF, DOC, DOCX)'}
+                    </button>
+                    {uploadAndLinkMutation.isError && (
+                      <p className={styles.fieldError}>Upload failed. Please try again.</p>
+                    )}
+                    <div className={styles.formActions}>
+                      <button className={styles.cancelMiniBtn} onClick={() => setShowSelectorFor(null)}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {linked ? (
+                  <div className={styles.resumeLinked}>
+                    <div className={styles.resumeInfo}>
+                      <span className={styles.resumeName}>{linked.fileName}</span>
+                      <span className={styles.resumeMeta}>
+                        {linked.fileSizeDisplay} · Linked {new Date(linked.linkedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                    <div className={styles.rowActions}>
+                      <button className={styles.ghostBtn} onClick={() => handleDownloadDocument(linked.resumeId, linked.fileName)}>Download</button>
+                      <button className={styles.ghostDangerBtn} onClick={() => unlinkDocumentMutation.mutate(docType)} disabled={unlinkDocumentMutation.isPending}>Remove</button>
+                    </div>
+                  </div>
+                ) : (
+                  !isShowingSelector && (
+                    <div className={styles.documentSlotEmpty}>
+                      <span className={styles.documentSlotEmptyText}>No {label.toLowerCase()} linked</span>
+                    </div>
+                  )
+                )}
               </div>
-              <div className={styles.rowActions}>
-                <button className={styles.ghostBtn} onClick={() => handleDownloadResume(jobResume.resumeId, jobResume.fileName)}>Download</button>
-                <button className={styles.ghostDangerBtn} onClick={() => unlinkResumeMutation.mutate()} disabled={unlinkResumeMutation.isPending}>Remove</button>
-              </div>
-            </div>
-          ) : (
-            !showResumeSelector && (
-              <div className={styles.emptyState}>
-                <FileText size={36} color="#CBD5E1" strokeWidth={1.5} />
-                <p className={styles.emptyTitle}>No resume linked</p>
-                <p className={styles.emptySubtitle}>Link a resume to track which version you submitted for this role.</p>
-              </div>
-            )
-          )}
+            );
+          })}
         </div>
       )}
       {/* ── AI TAB ── */}

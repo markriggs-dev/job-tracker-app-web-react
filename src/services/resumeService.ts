@@ -1,5 +1,5 @@
 import apiClient from './apiClient';
-import type { ResumeResponse, JobResumeLinkResponse, LinkResumeToJobRequest } from '../types/index';
+import type { ResumeResponse, JobDocumentsResponse, LinkDocumentToJobRequest } from '../types/index';
 
 export const resumeService = {
   getAll: async (): Promise<ResumeResponse[]> => {
@@ -16,9 +16,6 @@ export const resumeService = {
     return response.data;
   },
 
-  getDownloadUrl: (id: string): string =>
-    `${import.meta.env.VITE_GATEWAY_URL}/api/resumes/${id}/download`,
-
   downloadFile: async (id: string): Promise<Blob> => {
     const response = await apiClient.get(`/api/resumes/${id}/download`, {
       responseType: 'blob'
@@ -30,17 +27,16 @@ export const resumeService = {
     await apiClient.delete(`/api/resumes/${id}`);
   },
 
-  getJobResume: async (jobId: string): Promise<JobResumeLinkResponse | null> => {
-    const response = await apiClient.get(`/api/jobs/${jobId}/resume`);
+  getJobDocuments: async (jobId: string): Promise<JobDocumentsResponse> => {
+    const response = await apiClient.get(`/api/jobs/${jobId}/documents`);
     return response.data;
   },
 
-  linkToJob: async (jobId: string, data: LinkResumeToJobRequest): Promise<JobResumeLinkResponse> => {
-    const response = await apiClient.put(`/api/jobs/${jobId}/resume`, data);
-    return response.data;
+  linkDocumentToJob: async (jobId: string, data: LinkDocumentToJobRequest): Promise<void> => {
+    await apiClient.put(`/api/jobs/${jobId}/documents`, data);
   },
 
-  unlinkFromJob: async (jobId: string): Promise<void> => {
-    await apiClient.delete(`/api/jobs/${jobId}/resume`);
+  unlinkDocumentFromJob: async (jobId: string, documentType: 'Resume' | 'CoverLetter'): Promise<void> => {
+    await apiClient.delete(`/api/jobs/${jobId}/documents/${documentType}`);
   }
 };

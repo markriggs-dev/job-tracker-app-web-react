@@ -176,6 +176,7 @@ export interface JobResumeLinkResponse {
   id: string;
   jobRequisitionId: string;
   resumeId: string;
+  documentType: 'Resume' | 'CoverLetter';
   fileName: string;
   contentType: string;
   fileSizeBytes: number;
@@ -183,8 +184,14 @@ export interface JobResumeLinkResponse {
   linkedAt: string;
 }
 
-export interface LinkResumeToJobRequest {
+export interface JobDocumentsResponse {
+  resume: JobResumeLinkResponse | null;
+  coverLetter: JobResumeLinkResponse | null;
+}
+
+export interface LinkDocumentToJobRequest {
   resumeId: string;
+  documentType: 'Resume' | 'CoverLetter';
 }
 
 export interface ExperienceProfileResponse {
