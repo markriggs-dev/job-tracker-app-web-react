@@ -1,8 +1,8 @@
 export const JobStatus = {
   Discovered: 'Discovered',
   Applied: 'Applied',
-  InProgress: 'InProgress',
   WaitingOnResponse: 'WaitingOnResponse',
+  InProgress: 'InProgress',
   InterviewScheduled: 'InterviewScheduled',
   OfferReceived: 'OfferReceived',
   Closed: 'Closed',
