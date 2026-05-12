@@ -28,8 +28,8 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
 const STATUS_GUIDE = [
   { status: 'Discovered',          desc: 'Found this opportunity — evaluating whether to pursue it.' },
   { status: 'Applied',             desc: 'Resume submitted to a recruiter or job portal.' },
-  { status: 'Waiting On Response', desc: 'Submission complete — awaiting feedback from the recruiter or company.' },
   { status: 'In Progress',         desc: 'Actively engaged with the hiring team; interviews or assessments underway.' },
+  { status: 'Waiting On Response', desc: 'Submission complete — awaiting feedback from the recruiter or company.' },
   { status: 'Interview Scheduled', desc: 'Interview confirmed with the company.' },
   { status: 'Offer Received',      desc: 'Formal offer received from the company.' },
   { status: 'Closed',              desc: 'This opportunity is no longer active or available.' },
