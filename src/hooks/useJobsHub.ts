@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as signalR from '@microsoft/signalr';
 
 export const useJobsHub = () => {
-  const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -39,10 +39,16 @@ export const useJobsHub = () => {
 
     connection.start()
       .then(() => connection.invoke('JoinUserGroup', userId))
-      .catch(err => console.error('SignalR connection error:', err));
+      .catch(err => {
+        console.error('SignalR connection error:', err);
+        const msg: string = err?.message ?? '';
+        if (msg.includes('Refresh Token') || msg.includes('login_required') || msg.includes('Login required')) {
+          logout({ logoutParams: { returnTo: window.location.origin } });
+        }
+      });
 
     return () => {
       connection.stop();
     };
-  }, [isAuthenticated, user?.sub, getAccessTokenSilently, queryClient]);
+  }, [isAuthenticated, user?.sub, getAccessTokenSilently, logout, queryClient]);
 };
