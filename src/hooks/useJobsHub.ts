@@ -43,7 +43,7 @@ export const useJobsHub = () => {
         console.error('SignalR connection error:', err);
         const msg: string = err?.message ?? '';
         if (msg.includes('Refresh Token') || msg.includes('login_required') || msg.includes('Login required')) {
-          logout({ logoutParams: { returnTo: window.location.origin } });
+          logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } });
         }
       });
 
