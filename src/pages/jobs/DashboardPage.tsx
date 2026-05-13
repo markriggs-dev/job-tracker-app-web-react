@@ -20,6 +20,17 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
 };
 
 const ALL_STATUSES = Object.values(JobStatus);
+const PAGE_SIZE = 10;
+
+function getPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [1];
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+  if (current < total - 2) pages.push('...');
+  pages.push(total);
+  return pages;
+}
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -31,12 +42,15 @@ const DashboardPage = () => {
     } catch { return new Set(); }
   });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage] = useState(1);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { localStorage.setItem('dashboard_keyword', keyword); }, [keyword]);
   useEffect(() => {
     localStorage.setItem('dashboard_statuses', JSON.stringify([...selectedStatuses]));
   }, [selectedStatuses]);
+
+  useEffect(() => { setPage(1); }, [keyword, selectedStatuses]);
 
   const { data: allJobs = [], isLoading, error } = useQuery({
     queryKey: ['jobs'],
@@ -75,6 +89,12 @@ const DashboardPage = () => {
     }
     return jobs;
   }, [allJobs, keyword, selectedStatuses]);
+
+  const totalPages = Math.ceil(displayJobs.length / PAGE_SIZE);
+  const pagedJobs = useMemo(
+    () => displayJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [displayJobs, page]
+  );
 
   const toggleStatus = (status: JobStatus) => {
     setSelectedStatuses(prev => {
@@ -237,7 +257,7 @@ const DashboardPage = () => {
               </tr>
             </thead>
             <tbody>
-              {displayJobs.map((job: JobRequisitionListItem) => {
+              {pagedJobs.map((job: JobRequisitionListItem) => {
                 const s = STATUS_STYLE[job.status] ?? STATUS_STYLE.Discovered;
                 return (
                   <tr key={job.id} className={styles.row} onClick={() => navigate(`/jobs/${job.id}`)}>
@@ -256,6 +276,42 @@ const DashboardPage = () => {
               })}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className={styles.paginationBar}>
+              <span className={styles.paginationInfo}>
+                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, displayJobs.length)} of {displayJobs.length}
+              </span>
+              <div className={styles.paginationControls}>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  ← Prev
+                </button>
+                <span className={styles.pageNumbers}>
+                  {getPageNumbers(page, totalPages).map((n, i) =>
+                    n === '...'
+                      ? <span key={`e${i}`} className={styles.pageEllipsis}>…</span>
+                      : <button
+                          key={n}
+                          className={`${styles.pageBtn} ${n === page ? styles.pageBtnActive : ''}`}
+                          onClick={() => setPage(n as number)}
+                        >{n}</button>
+                  )}
+                </span>
+                <span className={styles.pageMobileInfo}>Page {page} of {totalPages}</span>
+                <button
+                  className={styles.pageBtn}
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
