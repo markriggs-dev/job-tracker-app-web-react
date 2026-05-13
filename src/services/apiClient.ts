@@ -16,8 +16,13 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(async (config) => {
   if (tokenProvider) {
-    const token = await tokenProvider();
-    config.headers.Authorization = `Bearer ${token}`;
+    try {
+      const token = await tokenProvider();
+      config.headers.Authorization = `Bearer ${token}`;
+    } catch {
+      logoutHandler?.();
+      return Promise.reject(new Error('Session expired'));
+    }
   }
   return config;
 });
