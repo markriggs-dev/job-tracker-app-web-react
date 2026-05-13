@@ -13,7 +13,7 @@ export const useApi = () => {
         })
       );
       setLogoutHandler(() =>
-        logout({ logoutParams: { returnTo: window.location.origin } })
+        logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
       );
     }
   }, [isAuthenticated, getAccessTokenSilently, logout]);
