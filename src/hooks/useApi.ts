@@ -12,9 +12,10 @@ export const useApi = () => {
           authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE }
         })
       );
-      setLogoutHandler(() =>
-        logout({ logoutParams: { returnTo: window.location.origin + import.meta.env.BASE_URL } })
-      );
+      setLogoutHandler(() => {
+        logout({ openUrl: false });
+        window.location.assign(window.location.origin + import.meta.env.BASE_URL + 'login');
+      });
     }
   }, [isAuthenticated, getAccessTokenSilently, logout]);
 };
