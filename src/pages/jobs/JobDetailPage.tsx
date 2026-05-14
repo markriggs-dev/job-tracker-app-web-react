@@ -143,6 +143,8 @@ const JobDetailPage = () => {
   const [showAddJournal, setShowAddJournal] = useState(false);
   const [journalForm, setJournalForm] = useState<CreateJournalEntryRequest>(emptyJournalForm);
   const [editingJournalId, setEditingJournalId] = useState<string | null>(null);
+  const addNotesRef = useRef<HTMLDivElement>(null);
+  const editNotesRef = useRef<HTMLDivElement>(null);
   const [journalEditForm, setJournalEditForm] = useState<UpdateJournalEntryRequest>({
     interactionType: InteractionType.Note,
     notes: "",
@@ -177,6 +179,25 @@ const JobDetailPage = () => {
     mutationFn: (entryId: string) => journalService.delete(id!, entryId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["journal", id] }),
   });
+
+  useEffect(() => {
+    if (editNotesRef.current) {
+      editNotesRef.current.innerHTML = DOMPurify.sanitize(journalEditForm.notes ?? '');
+    }
+  }, [editingJournalId]);
+
+  const handleJournalPaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    const sanitized = html
+      ? DOMPurify.sanitize(html, {
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'a', 'span'],
+          ALLOWED_ATTR: ['href', 'target'],
+        })
+      : text.replace(/\n/g, '<br>');
+    document.execCommand('insertHTML', false, sanitized);
+  };
 
   // ── Application Documents ──
   const [showSelectorFor, setShowSelectorFor] = useState<'Resume' | 'CoverLetter' | null>(null);
@@ -629,12 +650,13 @@ const JobDetailPage = () => {
                   onChange={e => setJournalForm(f => ({ ...f, entryDate: e.target.value }))}
                 />
               </div>
-              <textarea
-                className={styles.textarea}
-                placeholder="Notes (optional)"
-                value={journalForm.notes ?? ""}
-                rows={3}
-                onChange={e => setJournalForm(f => ({ ...f, notes: e.target.value }))}
+              <div
+                ref={addNotesRef}
+                contentEditable
+                className={styles.journalNotesEditor}
+                data-placeholder="Notes (optional)"
+                onPaste={handleJournalPaste}
+                suppressContentEditableWarning
               />
               {addJournalMutation.isError && <p className={styles.fieldError}>Failed to save entry.</p>}
               <div className={styles.formActions}>
@@ -642,7 +664,7 @@ const JobDetailPage = () => {
                 <button
                   className={styles.saveMiniBtn}
                   disabled={addJournalMutation.isPending}
-                  onClick={() => addJournalMutation.mutate(journalForm)}
+                  onClick={() => addJournalMutation.mutate({ ...journalForm, notes: addNotesRef.current?.innerHTML ?? '' })}
                 >
                   {addJournalMutation.isPending ? "Saving…" : "Save Entry"}
                 </button>
@@ -679,18 +701,19 @@ const JobDetailPage = () => {
                           onChange={e => setJournalEditForm(f => ({ ...f, entryDate: e.target.value }))}
                         />
                       </div>
-                      <textarea
-                        className={styles.textarea}
-                        rows={3}
-                        value={journalEditForm.notes ?? ""}
-                        onChange={e => setJournalEditForm(f => ({ ...f, notes: e.target.value }))}
+                      <div
+                        ref={editNotesRef}
+                        contentEditable
+                        className={styles.journalNotesEditor}
+                        onPaste={handleJournalPaste}
+                        suppressContentEditableWarning
                       />
                       <div className={styles.formActions}>
                         <button className={styles.cancelMiniBtn} onClick={() => setEditingJournalId(null)}>Cancel</button>
                         <button
                           className={styles.saveMiniBtn}
                           disabled={updateJournalMutation.isPending}
-                          onClick={() => updateJournalMutation.mutate({ entryId: entry.id, data: journalEditForm })}
+                          onClick={() => updateJournalMutation.mutate({ entryId: entry.id, data: { ...journalEditForm, notes: editNotesRef.current?.innerHTML ?? '' } })}
                         >
                           {updateJournalMutation.isPending ? "Saving…" : "Save"}
                         </button>
@@ -713,7 +736,12 @@ const JobDetailPage = () => {
                           <button className={styles.ghostDangerBtn} onClick={() => deleteJournalMutation.mutate(entry.id)} disabled={deleteJournalMutation.isPending}>Delete</button>
                         </div>
                       </div>
-                      {entry.notes && <p className={styles.journalNotes}>{entry.notes}</p>}
+                      {entry.notes && (
+                        <div
+                          className={styles.journalNotes}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(entry.notes) }}
+                        />
+                      )}
                     </>
                   )}
                 </div>

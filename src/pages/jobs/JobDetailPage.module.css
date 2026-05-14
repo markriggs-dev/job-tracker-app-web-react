@@ -717,13 +717,45 @@
   color: var(--color-text-muted);
 }
 
+.journalNotesEditor {
+  width: 100%;
+  min-height: 76px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text);
+  background: var(--color-surface);
+  outline: none;
+  font-family: inherit;
+  overflow-y: auto;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.journalNotesEditor:focus { border-color: var(--color-border-focus); }
+
+.journalNotesEditor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
 .journalNotes {
   font-size: 13px;
   color: var(--color-text-2);
   margin: 0;
   line-height: 1.6;
-  white-space: pre-wrap;
+  word-break: break-word;
 }
+
+.journalNotes a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.journalNotes a:hover { text-decoration: none; }
 
 /* ── Application Documents ── */
 .documentSlot {
