@@ -192,7 +192,7 @@ const JobDetailPage = () => {
     const text = e.clipboardData.getData('text/plain');
     const sanitized = html
       ? DOMPurify.sanitize(html, {
-          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'a', 'span'],
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'b', 'i', 'ul', 'ol', 'li', 'a', 'span', 'div'],
           ALLOWED_ATTR: ['href', 'target'],
         })
       : text.replace(/\n/g, '<br>');
