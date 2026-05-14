@@ -720,7 +720,7 @@ const JobDetailPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <>
+                    <div className={styles.journalEntryBody}>
                       <div className={styles.journalEntryHeader}>
                         <div className={styles.journalEntryMeta}>
                           <span className={styles.journalTypeBadge}>{entry.interactionTypeDisplay}</span>
@@ -742,7 +742,7 @@ const JobDetailPage = () => {
                           dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(entry.notes) }}
                         />
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
               ))}

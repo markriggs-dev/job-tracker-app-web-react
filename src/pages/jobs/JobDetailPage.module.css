@@ -690,6 +690,11 @@
   min-width: 0;
 }
 
+.journalEntryBody {
+  display: block;
+  width: 100%;
+}
+
 .journalEntryHeader {
   display: flex;
   justify-content: space-between;
@@ -745,6 +750,7 @@
 }
 
 .journalNotes {
+  display: block;
   font-size: 13px;
   color: var(--color-text-2);
   margin: 0;
