@@ -24,7 +24,8 @@ const EditJobPage = () => {
     jobDescription: '',
     dateDiscovered: '',
     applicationExpiryDate: '',
-    dateSubmitted: ''
+    dateSubmitted: '',
+    interviewDate: ''
   });
 
   const [error, setError] = useState('');
@@ -42,7 +43,8 @@ const EditJobPage = () => {
         jobDescription: '',
         dateDiscovered: job.dateDiscovered,
         applicationExpiryDate: job.applicationExpiryDate || '',
-        dateSubmitted: job.dateSubmitted || ''
+        dateSubmitted: job.dateSubmitted || '',
+        interviewDate: job.interviewDate ? job.interviewDate.slice(0, 16) : ''
       });
     }
   }, [job]);
@@ -97,6 +99,7 @@ const EditJobPage = () => {
       jobDescription,
       applicationExpiryDate: form.applicationExpiryDate || undefined,
       dateSubmitted: form.dateSubmitted || undefined,
+      interviewDate: form.interviewDate || undefined,
     });
   };
 
@@ -155,7 +158,10 @@ const EditJobPage = () => {
               <label className={styles.label}>Application Expiry Date</label>
               <input className={styles.input} type="date" name="applicationExpiryDate" value={form.applicationExpiryDate} onChange={handleChange} />
             </div>
-            <div className={styles.field} />
+            <div className={styles.field}>
+              <label className={styles.label}>Interview Date &amp; Time</label>
+              <input className={styles.input} type="datetime-local" name="interviewDate" value={form.interviewDate} onChange={handleChange} />
+            </div>
           </div>
         </div>
 

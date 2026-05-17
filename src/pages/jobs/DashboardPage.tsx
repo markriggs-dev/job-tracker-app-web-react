@@ -22,6 +22,12 @@ const STATUS_STYLE: Record<string, { color: string; bg: string }> = {
 const ALL_STATUSES = Object.values(JobStatus);
 const PAGE_SIZE = 10;
 
+function formatInterviewDate(raw: string): string {
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return raw;
+  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
 function getPageNumbers(current: number, total: number): (number | '...')[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages: (number | '...')[] = [1];
@@ -87,6 +93,14 @@ const DashboardPage = () => {
     if (selectedStatuses.size > 0) {
       jobs = jobs.filter(j => selectedStatuses.has(j.status as JobStatus));
     }
+    jobs = [...jobs].sort((a, b) => {
+      const aDate = a.interviewDate ? new Date(a.interviewDate).getTime() : null;
+      const bDate = b.interviewDate ? new Date(b.interviewDate).getTime() : null;
+      if (aDate !== null && bDate !== null) return aDate - bDate;
+      if (aDate !== null) return -1;
+      if (bDate !== null) return 1;
+      return 0;
+    });
     return jobs;
   }, [allJobs, keyword, selectedStatuses]);
 
@@ -253,7 +267,7 @@ const DashboardPage = () => {
                 <th className={styles.th}>Status</th>
                 <th className={styles.th}>Discovered</th>
                 <th className={styles.th}>Submitted</th>
-                <th className={styles.th}>Expires</th>
+                <th className={styles.th}>Interview Date</th>
               </tr>
             </thead>
             <tbody>
@@ -270,7 +284,7 @@ const DashboardPage = () => {
                     </td>
                     <td className={styles.td}>{job.dateDiscovered}</td>
                     <td className={styles.td}>{job.dateSubmitted || '—'}</td>
-                    <td className={styles.td}>{job.applicationExpiryDate || '—'}</td>
+                    <td className={styles.td}>{job.interviewDate ? formatInterviewDate(job.interviewDate) : '—'}</td>
                   </tr>
                 );
               })}

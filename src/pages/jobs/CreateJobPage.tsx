@@ -15,7 +15,8 @@ const CreateJobPage = () => {
     sourceUrl: '',
     companyCareerPortalUrl: '',
     dateDiscovered: new Date().toISOString().split('T')[0],
-    applicationExpiryDate: ''
+    applicationExpiryDate: '',
+    interviewDate: ''
   });
 
   const [error, setError] = useState('');
@@ -62,6 +63,7 @@ const CreateJobPage = () => {
       companyCareerPortalUrl: form.companyCareerPortalUrl || undefined,
       jobDescription,
       applicationExpiryDate: form.applicationExpiryDate || undefined,
+      interviewDate: form.interviewDate || undefined,
     });
   };
 
@@ -112,6 +114,13 @@ const CreateJobPage = () => {
               <label className={styles.label}>Application Expiry Date</label>
               <input className={styles.input} type="date" name="applicationExpiryDate" value={form.applicationExpiryDate} onChange={handleChange} />
             </div>
+          </div>
+          <div className={styles.row}>
+            <div className={styles.field}>
+              <label className={styles.label}>Interview Date &amp; Time</label>
+              <input className={styles.input} type="datetime-local" name="interviewDate" value={form.interviewDate} onChange={handleChange} />
+            </div>
+            <div className={styles.field} />
           </div>
         </div>
 
