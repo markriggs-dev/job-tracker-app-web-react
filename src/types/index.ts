@@ -23,6 +23,7 @@ export interface JobRequisition {
   dateDiscovered: string;
   applicationExpiryDate?: string;
   dateSubmitted?: string;
+  interviewDate?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -36,6 +37,7 @@ export interface JobRequisitionListItem {
   dateDiscovered: string;
   dateSubmitted?: string;
   applicationExpiryDate?: string;
+  interviewDate?: string;
 }
 
 export interface CreateJobRequisitionRequest {
@@ -46,6 +48,7 @@ export interface CreateJobRequisitionRequest {
   jobDescription?: string;
   dateDiscovered: string;
   applicationExpiryDate?: string;
+  interviewDate?: string;
 }
 
 export interface UpdateJobRequisitionRequest extends CreateJobRequisitionRequest {

@@ -438,6 +438,14 @@ const JobDetailPage = () => {
                 <span className={styles.detailValue}>{job.applicationExpiryDate || "—"}</span>
               </div>
               <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Interview Date</span>
+                <span className={styles.detailValue}>
+                  {job.interviewDate
+                    ? new Date(job.interviewDate).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+                    : "—"}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Found On</span>
                 <span className={styles.detailValue}>
                   {job.sourceUrl ? <a href={job.sourceUrl} target="_blank" rel="noreferrer">View ↗</a> : "—"}
