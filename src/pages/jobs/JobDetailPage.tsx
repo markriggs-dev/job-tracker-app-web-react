@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
@@ -75,6 +76,7 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["job", id] });
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
     },
+    onError: () => toast.error("Failed to update status. Please try again."),
   });
 
   const deleteMutation = useMutation({
@@ -83,6 +85,7 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["jobs"] });
       navigate("/");
     },
+    onError: () => toast.error("Failed to delete job. Please try again."),
   });
 
   // ── Contacts ──
@@ -114,11 +117,13 @@ const JobDetailPage = () => {
       setShowAddContact(false);
       setContactForm(emptyContactForm);
     },
+    onError: () => toast.error("Failed to add contact. Please try again."),
   });
 
   const removeContactMutation = useMutation({
     mutationFn: (linkId: string) => contactService.removeContactFromJob(id!, linkId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobContacts", id] }),
+    onError: () => toast.error("Failed to remove contact. Please try again."),
   });
 
   const updateContactMutation = useMutation({
@@ -131,6 +136,7 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setEditingContactId(null);
     },
+    onError: () => toast.error("Failed to update contact. Please try again."),
   });
 
   // ── Journal ──
@@ -164,6 +170,7 @@ const JobDetailPage = () => {
       setShowAddJournal(false);
       setJournalForm(emptyJournalForm);
     },
+    onError: () => toast.error("Failed to save journal entry. Please try again."),
   });
 
   const updateJournalMutation = useMutation({
@@ -173,11 +180,13 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["journal", id] });
       setEditingJournalId(null);
     },
+    onError: () => toast.error("Failed to update journal entry. Please try again."),
   });
 
   const deleteJournalMutation = useMutation({
     mutationFn: (entryId: string) => journalService.delete(id!, entryId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["journal", id] }),
+    onError: () => toast.error("Failed to delete journal entry. Please try again."),
   });
 
   useEffect(() => {
@@ -223,6 +232,7 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] });
       setShowSelectorFor(null);
     },
+    onError: () => toast.error("Failed to link document. Please try again."),
   });
 
   const uploadAndLinkMutation = useMutation({
@@ -235,11 +245,13 @@ const JobDetailPage = () => {
       queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] });
       setShowSelectorFor(null);
     },
+    onError: () => toast.error("Failed to upload document. Please try again."),
   });
 
   const unlinkDocumentMutation = useMutation({
     mutationFn: (documentType: 'Resume' | 'CoverLetter') => resumeService.unlinkDocumentFromJob(id!, documentType),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["jobDocuments", id] }),
+    onError: () => toast.error("Failed to remove document. Please try again."),
   });
 
   const handleDownloadDocument = (resumeId: string, fileName: string) => {
@@ -312,6 +324,7 @@ const JobDetailPage = () => {
   const deleteGeneratedMutation = useMutation({
     mutationFn: (resumeId: string) => aiService.deleteGeneratedResume(id!, resumeId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["generated-resumes", id] }),
+    onError: () => toast.error("Failed to delete generated resume. Please try again."),
   });
 
   const handleDownloadGenerated = (resumeId: string, fileName: string) => {
