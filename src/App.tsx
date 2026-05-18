@@ -1,6 +1,7 @@
 import { Auth0Provider } from '@auth0/auth0-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from './hooks/useApi';
 import { useJobsHub } from './hooks/useJobsHub';
@@ -83,6 +84,7 @@ function App() {
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <AppRoutes />
         </BrowserRouter>
+        <Toaster position="bottom-right" richColors />
       </QueryClientProvider>
     </Auth0Provider>
   );
